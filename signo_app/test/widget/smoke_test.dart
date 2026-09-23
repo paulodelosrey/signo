@@ -129,7 +129,10 @@ void main() {
     await tester.tap(find.text('Traductor'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Traductor offline'), findsOneWidget);
+    // M4: the Traductor tab now hosts the offline translator (input +
+    // quick phrases + translate button) instead of the M1 placeholder.
+    expect(find.text('Traducir'), findsOneWidget);
+    expect(find.text('Gracias'), findsOneWidget);
     expect(find.byType(SignoShell), findsOneWidget);
   });
 }

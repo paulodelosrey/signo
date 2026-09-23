@@ -185,6 +185,17 @@ class VocabIndex {
 
   /// Resolves an already-normalized lemma directly.
   VocabEntry? lookupLemma(String lemma) => _lemmaIndex[lemma];
+
+  /// Resolves an entry by id (e.g. a `Gloss.entryId` rendered through the
+  /// SignView seam); null when unknown.
+  VocabEntry? byId(String id) {
+    for (final VocabEntry entry in entries) {
+      if (entry.id == id) {
+        return entry;
+      }
+    }
+    return null;
+  }
 }
 
 /// Loads the compiled content assets at startup.

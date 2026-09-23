@@ -2,7 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:signo_app/core/gloss_mapper/gloss_mapper.dart';
 import 'package:signo_app/core/lsc_vocab/lsc_vocab.dart';
+import 'package:signo_app/core/translator/local_matcher.dart';
+import 'package:signo_app/core/translator/translator_service.dart';
 
 /// Loads the REAL compiled assets (declared in pubspec) through rootBundle,
 /// proving the offline asset path works without the source CSV.
@@ -42,6 +45,36 @@ void main() {
       );
       expect(rules.categoryWords('copula'), contains('es'));
       expect(rules.provenanceNote, isNotEmpty);
+    });
+  });
+
+  group('offline scripted translation (spec: translator)', () {
+    test('scripted sentence maps time-fronted and verb-final over the '
+        'REAL compiled vocab', () async {
+      final VocabIndex index = VocabIndex.fromJsonString(
+        await rootBundle.loadString(kVocabAssetPath),
+      );
+      final GrammarRuleSet rules = GrammarRuleSet.fromJson(
+        jsonDecode(await rootBundle.loadString(kGrammarAssetPath))!
+            as Map<String, Object?>,
+      );
+
+      final TranslationResult result = await LocalMatcher(
+        index: index,
+        rules: rules,
+      ).translate('Ayer yo estudiar en la casa');
+
+      // time-front: AYER leads; verb-final: ESTUDIAR closes; `en`/`la`
+      // dropped by the article/preposition rules (notice stays clean).
+      expect(result.glosses.map((Gloss g) => g.label).toList(), <String>[
+        'AYER',
+        'YO',
+        'CASA',
+        'ESTUDIAR',
+      ]);
+      expect(result.glosses.first.isTime, isTrue);
+      expect(result.unknownWords, isEmpty);
+      expect(result.notice, isNull);
     });
   });
 }
