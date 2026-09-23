@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/settings/settings.dart';
 import 'theme.dart';
-import '../features/learn/learn_screen.dart';
-import '../features/learn/practice_screen.dart';
+import '../features/learn/learn_tree_screen.dart';
 import '../features/paywall/premium_screen.dart';
+import '../features/practice/practice_hub_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/translator/translator_screen.dart';
 
@@ -71,8 +71,8 @@ class _SignoShellState extends ConsumerState<SignoShell> {
       body: IndexedStack(
         index: _index,
         children: const <Widget>[
-          LearnScreen(),
-          PracticeScreen(),
+          LearnTreeScreen(),
+          PracticeHubScreen(),
           TranslatorScreen(),
           PremiumScreen(),
         ],

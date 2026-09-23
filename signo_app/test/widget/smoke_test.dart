@@ -6,17 +6,57 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:signo_app/app/router.dart';
 import 'package:signo_app/app/shell.dart';
 import 'package:signo_app/app/theme.dart';
+import 'package:signo_app/core/lsc_vocab/lsc_vocab.dart';
 import 'package:signo_app/core/settings/settings.dart';
+
+/// Minimal in-memory content: smoke tests exercise the shell and theming,
+/// NOT the asset pipeline (real assets are covered by vocab_assets_test).
+/// Loading real assets through rootBundle inside repeated `testWidgets`
+/// FakeAsync zones is flaky (the second test's asset future may never
+/// complete), so content is injected instead.
+final List<VocabEntry> kSmokeVocab = <VocabEntry>[
+  VocabEntry(
+    id: 'smoke-1',
+    gloss: 'HOLA',
+    lemmas: <String>['hola'],
+    lesson: 1,
+    subtema: 'Saludos informales',
+    hasVideo: false,
+  ),
+  VocabEntry(
+    id: 'smoke-2',
+    gloss: 'CHAU',
+    lemmas: <String>['chau'],
+    lesson: 1,
+    subtema: 'Despedida',
+    hasVideo: false,
+  ),
+];
+
+const GrammarRuleSet kSmokeGrammar = GrammarRuleSet(
+  provenanceNote: 'smoke fixture',
+  categories: <String, Set<String>>{},
+  rules: <GrammarRule>[],
+);
 
 Future<void> pumpApp(WidgetTester tester, {required bool onboardingSeen}) async {
   SharedPreferences.setMockInitialValues(<String, Object>{
     'signo.onboardingSeen': onboardingSeen,
+    // The learning path's active node pulses forever (repeat animation);
+    // reduced motion keeps pumpAndSettle deterministic in widget tests.
+    'signo.reducedMotion': true,
   });
   final SharedPreferences prefs = await SharedPreferences.getInstance();
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
+        vocabIndexProvider.overrideWith(
+          (Ref ref) async => VocabIndex.build(kSmokeVocab),
+        ),
+        grammarRuleSetProvider.overrideWith(
+          (Ref ref) async => kSmokeGrammar,
+        ),
       ],
       child: const SignoApp(),
     ),
