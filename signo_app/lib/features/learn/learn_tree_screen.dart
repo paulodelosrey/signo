@@ -10,6 +10,7 @@ import 'curriculum.dart';
 import 'economy.dart';
 import 'lesson_screen.dart';
 import 'lesson_session.dart';
+import 'repasar.dart';
 
 /// Aprender tab: the 4-unit serpentine learning path.
 ///
@@ -69,26 +70,10 @@ class _TreeBody extends ConsumerWidget {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _startRepasar(BuildContext context, WidgetRef ref) async {
-    if (progress.failedSignIds.isEmpty) {
-      return;
-    }
-    final Map<String, VocabEntry> byId = <String, VocabEntry>{
-      for (final VocabEntry entry in vocabulary) entry.id: entry,
-    };
-    final List<VocabEntry> failed = <VocabEntry>[
-      for (final String id in progress.failedSignIds)
-        if (byId[id] != null) byId[id]!,
-    ];
-    if (failed.isEmpty) {
-      return;
-    }
-    ref.read(sessionProvider.notifier).start(
-          failed,
-          isRepasar: true,
-          distractorPool: vocabulary,
-        );
-    Navigator.of(context).push(_lessonRoute());
+  /// Delegates to the shared Repasar starter (same state/semantics as the
+  /// Profile review entry); kept as a method so the card wiring is unchanged.
+  void _startRepasar(BuildContext context, WidgetRef ref) {
+    startRepasarSession(context, ref);
   }
 
   void _startNode(

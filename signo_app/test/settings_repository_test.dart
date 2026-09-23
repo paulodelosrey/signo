@@ -17,6 +17,7 @@ void main() {
       expect(settings.onboardingSeen, isFalse,
           reason: 'first launch must show the onboarding gate');
       expect(settings.reducedMotion, isFalse);
+      expect(settings.largeText, isFalse);
       expect(settings.dailyGoalMinutes, 15);
       expect(settings.profileName, 'Aprendiz');
       expect(settings.avatarIndex, 0);
@@ -30,6 +31,7 @@ void main() {
 
       await repository.setOnboardingSeen(true);
       await repository.setReducedMotion(true);
+      await repository.setLargeText(true);
       await repository.setDailyGoalMinutes(5);
       await repository.setProfile(name: 'Moni', avatarIndex: 3);
 
@@ -37,6 +39,7 @@ void main() {
 
       expect(settings.onboardingSeen, isTrue);
       expect(settings.reducedMotion, isTrue);
+      expect(settings.largeText, isTrue);
       expect(settings.dailyGoalMinutes, 5);
       expect(settings.profileName, 'Moni');
       expect(settings.avatarIndex, 3);

@@ -25,6 +25,20 @@ class SignoApp extends ConsumerWidget {
       title: 'Signo',
       debugShowCheckedModeBanner: false,
       theme: buildKineticTheme(),
+      // A11y font-scaling (spec app-shell): the large-text toggle scales the
+      // whole app (navigator included) through a MediaQuery textScaler
+      // override; the system's own scaling is respected when it is off.
+      builder: (BuildContext context, Widget? child) {
+        if (!settings.largeText) {
+          return child ?? const SizedBox.shrink();
+        }
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: const TextScaler.linear(1.3),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: AnimatedSwitcher(
         duration: reducedMotion ? Duration.zero : const Duration(milliseconds: 250),
         child: settings.onboardingSeen

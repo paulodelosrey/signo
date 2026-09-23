@@ -3,9 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/theme.dart';
 import '../../core/settings/settings.dart';
+import '../../widgets/kinetic_button.dart';
+import '../learn/economy.dart';
+import '../learn/repasar.dart';
 
-/// Profile screen: anonymous local profile (name + emoji avatar) and the
-/// accessibility toggles, persisted through the settings repository.
+/// Profile screen: anonymous local profile (name + emoji avatar), the
+/// learning stats surfaced from the progress store (XP, streak, gems,
+/// hearts/∞ PRO), the Repasar entry point (shared semantics with the
+/// Aprender tree card) and the accessibility toggles, all persisted through
+/// the settings/progress repositories.
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
@@ -33,6 +39,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final AppSettings settings = ref.watch(settingsProvider);
+    final EconomyState progress = ref.watch(progressProvider);
     final TextTheme textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -40,6 +47,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          Text('Tu progreso', style: textTheme.headlineSmall),
+          const SizedBox(height: 12),
+          _StatsGrid(progress: progress),
+          if (progress.failedSignIds.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _RepasarEntry(
+              failedCount: progress.failedSignIds.length,
+              onStart: () => startRepasarSession(context, ref),
+            ),
+          ],
+          const SizedBox(height: 20),
           Text('Tu perfil', style: textTheme.headlineSmall),
           const SizedBox(height: 4),
           Text(
@@ -125,6 +143,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 .read(settingsProvider.notifier)
                 .setReducedMotion(value),
           ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Texto grande'),
+            subtitle: Text(
+              'Aumenta el tamaño del texto en toda la app.',
+              style: textTheme.bodyMedium?.copyWith(
+                color: KineticColors.textLow,
+              ),
+            ),
+            value: settings.largeText,
+            onChanged: (bool value) =>
+                ref.read(settingsProvider.notifier).setLargeText(value),
+          ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(20),
@@ -144,6 +175,195 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Learning stats from the progress store: 2×2 tiles mirroring the Aprender
+/// HUD (streak · gems · XP · hearts). PRO shows infinite hearts and a badge.
+class _StatsGrid extends StatelessWidget {
+  const _StatsGrid({required this.progress});
+
+  final EconomyState progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _StatTile(
+                emoji: '🔥',
+                value: '${progress.streak}',
+                label: 'Racha',
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _StatTile(
+                emoji: '💎',
+                value: '${progress.gems}',
+                label: 'Gemas',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _StatTile(
+                emoji: '⭐',
+                value: '${progress.xp}',
+                label: 'XP',
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _StatTile(
+                emoji: '❤️',
+                value: progress.hasPro ? '∞' : '${progress.hearts}',
+                label: 'Corazones',
+                badge: progress.hasPro ? 'PRO' : null,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// One read-only stat tile (no tap target, so the 48px rule does not apply).
+class _StatTile extends StatelessWidget {
+  const _StatTile({
+    required this.emoji,
+    required this.value,
+    required this.label,
+    this.badge,
+  });
+
+  final String emoji;
+  final String value;
+  final String label;
+  final String? badge;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: KineticColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(KineticRadii.lg),
+        border: Border.all(color: KineticColors.outline),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 20)),
+              if (badge != null) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: KineticColors.amber,
+                    borderRadius: BorderRadius.circular(KineticRadii.pill),
+                  ),
+                  child: Text(
+                    badge!,
+                    style: textTheme.labelSmall?.copyWith(
+                      color: KineticColors.onAmber,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          Text(
+            label,
+            style: textTheme.labelSmall?.copyWith(
+              color: KineticColors.textLow,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Profile Repasar entry: same card semantics as the Aprender tree card
+/// (URGENTE badge + failed count + start button) driven by the SAME shared
+/// starter — no duplicated session logic.
+class _RepasarEntry extends StatelessWidget {
+  const _RepasarEntry({required this.failedCount, required this.onStart});
+
+  final int failedCount;
+  final VoidCallback onStart;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: KineticColors.errorContainer,
+        borderRadius: BorderRadius.circular(KineticRadii.lg),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: KineticColors.error,
+                  borderRadius: BorderRadius.circular(KineticRadii.pill),
+                ),
+                child: Text(
+                  'URGENTE',
+                  style: textTheme.labelSmall?.copyWith(
+                    color: KineticColors.onError,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '$failedCount ${failedCount == 1 ? 'seña fallida' : 'señas fallidas'}',
+                  style: textTheme.titleSmall?.copyWith(
+                    color: KineticColors.onErrorContainer,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          KineticButton(
+            label: 'Repasar ahora',
+            variant: KineticButtonVariant.secondary,
+            onPressed: onStart,
           ),
         ],
       ),

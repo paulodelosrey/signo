@@ -8,6 +8,7 @@ import 'package:signo_app/app/shell.dart';
 import 'package:signo_app/app/theme.dart';
 import 'package:signo_app/core/lsc_vocab/lsc_vocab.dart';
 import 'package:signo_app/core/settings/settings.dart';
+import 'package:signo_app/features/dictionary/dictionary_screen.dart';
 
 /// Minimal in-memory content: smoke tests exercise the shell and theming,
 /// NOT the asset pipeline (real assets are covered by vocab_assets_test).
@@ -39,12 +40,17 @@ const GrammarRuleSet kSmokeGrammar = GrammarRuleSet(
   rules: <GrammarRule>[],
 );
 
-Future<void> pumpApp(WidgetTester tester, {required bool onboardingSeen}) async {
+Future<void> pumpApp(
+  WidgetTester tester, {
+  required bool onboardingSeen,
+  Map<String, Object>? prefsOverrides,
+}) async {
   SharedPreferences.setMockInitialValues(<String, Object>{
     'signo.onboardingSeen': onboardingSeen,
     // The learning path's active node pulses forever (repeat animation);
     // reduced motion keeps pumpAndSettle deterministic in widget tests.
     'signo.reducedMotion': true,
+    ...?prefsOverrides,
   });
   final SharedPreferences prefs = await SharedPreferences.getInstance();
   await tester.pumpWidget(
@@ -134,5 +140,38 @@ void main() {
     expect(find.text('Traducir'), findsOneWidget);
     expect(find.text('Gracias'), findsOneWidget);
     expect(find.byType(SignoShell), findsOneWidget);
+  });
+
+  testWidgets('dictionary opens from the Aprender tab app-bar action', (
+    WidgetTester tester,
+  ) async {
+    await pumpApp(tester, onboardingSeen: true);
+
+    // The action lives on the Aprender tab only; the injected smoke vocab
+    // has 2 signs, so the browse-all count reads '2 señas'.
+    await tester.tap(find.byIcon(Icons.menu_book_outlined));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DictionaryScreen), findsOneWidget);
+    expect(find.text('2 señas'), findsOneWidget);
+    expect(find.text('HOLA'), findsOneWidget);
+  });
+
+  testWidgets('large text a11y toggle scales app text through the router', (
+    WidgetTester tester,
+  ) async {
+    await pumpApp(
+      tester,
+      onboardingSeen: true,
+      prefsOverrides: <String, Object>{'signo.largeText': true},
+    );
+
+    // The router builder overrides the textScaler app-wide (spec a11y
+    // font-scaling): a 10sp style renders at 13sp. `.first` — the label also
+    // exists on the navigation bar.
+    final double scale =
+        MediaQuery.textScalerOf(tester.element(find.text('Aprender').first))
+            .scale(10);
+    expect(scale, 13.0);
   });
 }

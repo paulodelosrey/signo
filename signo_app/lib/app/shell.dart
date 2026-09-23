@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/settings/settings.dart';
 import 'theme.dart';
+import '../features/dictionary/dictionary_screen.dart';
 import '../features/learn/learn_tree_screen.dart';
 import '../features/paywall/premium_screen.dart';
 import '../features/practice/practice_hub_screen.dart';
@@ -48,6 +49,23 @@ class _SignoShellState extends ConsumerState<SignoShell> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         actions: [
+          // Visual dictionary entry lives on the Aprender tab (spec
+          // `visual-dictionary`; not a nav tab — the rail keeps its 4 visible
+          // destinations with Bingo hidden).
+          if (_index == 0)
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: IconButton(
+                tooltip: 'Diccionario',
+                icon: const Icon(Icons.menu_book_outlined),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (BuildContext context) =>
+                        const DictionaryScreen(),
+                  ),
+                ),
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: IconButton(

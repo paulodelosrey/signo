@@ -14,6 +14,7 @@ class AppSettings {
   const AppSettings({
     required this.onboardingSeen,
     required this.reducedMotion,
+    required this.largeText,
     required this.dailyGoalMinutes,
     required this.profileName,
     required this.avatarIndex,
@@ -21,6 +22,10 @@ class AppSettings {
 
   final bool onboardingSeen;
   final bool reducedMotion;
+
+  /// Accessibility toggle: scales all text up app-wide (spec a11y
+  /// font-scaling requirement; applied in the router's `builder`).
+  final bool largeText;
   final int dailyGoalMinutes;
   final String profileName;
   final int avatarIndex;
@@ -28,6 +33,7 @@ class AppSettings {
   AppSettings copyWith({
     bool? onboardingSeen,
     bool? reducedMotion,
+    bool? largeText,
     int? dailyGoalMinutes,
     String? profileName,
     int? avatarIndex,
@@ -35,6 +41,7 @@ class AppSettings {
     return AppSettings(
       onboardingSeen: onboardingSeen ?? this.onboardingSeen,
       reducedMotion: reducedMotion ?? this.reducedMotion,
+      largeText: largeText ?? this.largeText,
       dailyGoalMinutes: dailyGoalMinutes ?? this.dailyGoalMinutes,
       profileName: profileName ?? this.profileName,
       avatarIndex: avatarIndex ?? this.avatarIndex,
@@ -46,6 +53,7 @@ class AppSettings {
     return other is AppSettings &&
         other.onboardingSeen == onboardingSeen &&
         other.reducedMotion == reducedMotion &&
+        other.largeText == largeText &&
         other.dailyGoalMinutes == dailyGoalMinutes &&
         other.profileName == profileName &&
         other.avatarIndex == avatarIndex;
@@ -55,6 +63,7 @@ class AppSettings {
   int get hashCode => Object.hash(
     onboardingSeen,
     reducedMotion,
+    largeText,
     dailyGoalMinutes,
     profileName,
     avatarIndex,
@@ -67,6 +76,7 @@ class SettingsRepository {
 
   static const String _kOnboardingSeen = 'signo.onboardingSeen';
   static const String _kReducedMotion = 'signo.reducedMotion';
+  static const String _kLargeText = 'signo.largeText';
   static const String _kDailyGoalMinutes = 'signo.dailyGoalMinutes';
   static const String _kProfileName = 'signo.profileName';
   static const String _kAvatarIndex = 'signo.avatarIndex';
@@ -79,6 +89,7 @@ class SettingsRepository {
     return AppSettings(
       onboardingSeen: _prefs.getBool(_kOnboardingSeen) ?? false,
       reducedMotion: _prefs.getBool(_kReducedMotion) ?? false,
+      largeText: _prefs.getBool(_kLargeText) ?? false,
       dailyGoalMinutes: _prefs.getInt(_kDailyGoalMinutes) ?? 15,
       profileName: _prefs.getString(_kProfileName) ?? 'Aprendiz',
       avatarIndex: avatarIndex.clamp(0, kAvatarEmojis.length - 1),
@@ -90,6 +101,8 @@ class SettingsRepository {
 
   Future<void> setReducedMotion(bool value) =>
       _prefs.setBool(_kReducedMotion, value);
+
+  Future<void> setLargeText(bool value) => _prefs.setBool(_kLargeText, value);
 
   Future<void> setDailyGoalMinutes(int minutes) =>
       _prefs.setInt(_kDailyGoalMinutes, minutes);
@@ -130,6 +143,11 @@ class SettingsController extends Notifier<AppSettings> {
 
   Future<void> setReducedMotion(bool value) async {
     await _repository.setReducedMotion(value);
+    state = _repository.load();
+  }
+
+  Future<void> setLargeText(bool value) async {
+    await _repository.setLargeText(value);
     state = _repository.load();
   }
 
