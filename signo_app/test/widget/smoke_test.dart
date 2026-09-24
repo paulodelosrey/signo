@@ -7,8 +7,10 @@ import 'package:signo_app/app/router.dart';
 import 'package:signo_app/app/shell.dart';
 import 'package:signo_app/app/theme.dart';
 import 'package:signo_app/core/lsc_vocab/lsc_vocab.dart';
+import 'package:signo_app/core/revenuecat/billing.dart';
 import 'package:signo_app/core/settings/settings.dart';
 import 'package:signo_app/features/dictionary/dictionary_screen.dart';
+import 'package:signo_app/widgets/kinetic_button.dart';
 
 /// Minimal in-memory content: smoke tests exercise the shell and theming,
 /// NOT the asset pipeline (real assets are covered by vocab_assets_test).
@@ -39,6 +41,27 @@ const GrammarRuleSet kSmokeGrammar = GrammarRuleSet(
   categories: <String, Set<String>>{},
   rules: <GrammarRule>[],
 );
+
+/// The colored face of a [KineticButton] (its inner animated container).
+Finder _kineticFaceFinder(Color faceColor) => find.byWidgetPredicate(
+      (Widget w) =>
+          w is AnimatedContainer &&
+          w.decoration is BoxDecoration &&
+          (w.decoration! as BoxDecoration).color == faceColor,
+    );
+
+/// The T13 nav contract: Bingo is a hidden tab, so its label must never be a
+/// navigation destination. Scoped to the rail because the Práctica hub
+/// legitimately shows a disabled 'Bingo' exercise card (content, not nav).
+void _expectNoBingoInNavRail() {
+  expect(
+    find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.text('Bingo'),
+    ),
+    findsNothing,
+  );
+}
 
 Future<void> pumpApp(
   WidgetTester tester, {
@@ -174,4 +197,166 @@ void main() {
             .scale(10);
     expect(scale, 13.0);
   });
+
+  testWidgets(
+    'T13 smoke: onboarding gate leads to themed tabs with Bingo hidden',
+    (WidgetTester tester) async {
+      // -- First launch: static onboarding gate, Kinetic themed.
+      await pumpApp(tester, onboardingSeen: false);
+
+      expect(find.text('Aprende Lengua de Señas Colombiana'), findsOneWidget);
+      final BuildContext scaffoldContext =
+          tester.element(find.byType(Scaffold).first);
+      expect(
+        Theme.of(scaffoldContext).scaffoldBackgroundColor,
+        KineticColors.background,
+      );
+      expect(find.byType(KineticButton), findsOneWidget);
+      // Scoped: the active onboarding page-dot is a mint AnimatedContainer
+      // too, so the button face is matched inside the KineticButton subtree.
+      expect(
+        find.descendant(
+          of: find.byType(KineticButton),
+          matching: _kineticFaceFinder(KineticColors.mint),
+        ),
+        findsOneWidget,
+      );
+
+      // Drive the REAL gate path: 'Saltar' completes onboarding (write-through
+      // to prefs) and the router swaps to the shell (reduced motion ⇒ a
+      // zero-duration switch).
+      await tester.tap(find.text('Saltar'));
+      await tester.pumpAndSettle();
+
+      // -- 5-tab contract: 4 visible destinations + Bingo hidden.
+      final Finder navBar = find.byType(NavigationBar);
+      expect(navBar, findsOneWidget);
+      expect(
+        find.descendant(
+          of: navBar,
+          matching: find.byType(NavigationDestination),
+        ),
+        findsNWidgets(4),
+      );
+      for (final String label in const <String>[
+        'Aprender',
+        'Práctica',
+        'Traductor',
+        'Premium',
+      ]) {
+        expect(
+          find.descendant(of: navBar, matching: find.text(label)),
+          findsOneWidget,
+        );
+      }
+      // On the Aprender tab 'Bingo' is absent from the whole shell; the
+      // nav-rail absence is re-checked on every visited tab below.
+      expect(find.text('Bingo'), findsNothing);
+
+      // -- Kinetic tokens behind every tab: mint/iris/amber scheme on the
+      // dark background ladder.
+      final BuildContext navContext = tester.element(navBar);
+      expect(Theme.of(navContext).colorScheme.primary, KineticColors.mint);
+      expect(Theme.of(navContext).colorScheme.secondary, KineticColors.iris);
+      expect(Theme.of(navContext).colorScheme.tertiary, KineticColors.amber);
+      expect(
+        Theme.of(navContext).scaffoldBackgroundColor,
+        KineticColors.background,
+      );
+      // Space Grotesk carries the headline (scoped to the AppBar — the label
+      // also lives in the navigation bar).
+      final Finder appBarTitle = find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Aprender'),
+      );
+      expect(appBarTitle, findsOneWidget);
+      // google_fonts resolves asset-loaded family names (offline tests use
+      // bundled assets): 'SpaceGrotesk_regular', not the display name.
+      expect(
+        DefaultTextStyle.of(tester.element(appBarTitle)).style.fontFamily,
+        startsWith('SpaceGrotesk'),
+      );
+
+      // -- Aprender: unit path with a mint progress accent.
+      expect(find.text('UNIDAD 1'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (Widget w) =>
+              w is LinearProgressIndicator && w.color == KineticColors.mint,
+        ),
+        findsWidgets,
+      );
+
+      // -- Práctica: themed exercise hub, Plus Jakarta body text.
+      await tester.tap(find.text('Práctica'));
+      await tester.pumpAndSettle();
+      expect(find.text('Elige un ejercicio'), findsOneWidget);
+      final Finder bodyText = find.text(
+        'Completa lecciones en Aprender para desbloquear la práctica.',
+      );
+      expect(bodyText, findsOneWidget);
+      expect(
+        DefaultTextStyle.of(tester.element(bodyText)).style.fontFamily,
+        startsWith('PlusJakartaSans'),
+      );
+      final Icon recognizeIcon =
+          tester.widget<Icon>(find.byIcon(Icons.visibility_outlined));
+      expect(recognizeIcon.color, KineticColors.mint);
+      _expectNoBingoInNavRail();
+
+      // -- Traductor: KineticButton CTA plus the real offline quick-phrase
+      // path ('Hola' matches the fixture lemma). load() pauses at the first
+      // sign, so no timers are pending for pumpAndSettle.
+      await tester.tap(find.text('Traductor'));
+      await tester.pumpAndSettle();
+      expect(find.text('Traducir'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(KineticButton),
+          matching: _kineticFaceFinder(KineticColors.mint),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.widgetWithText(ActionChip, 'Hola'));
+      await tester.pumpAndSettle();
+      // The translated sequence renders through the REAL LocalMatcher path
+      // (load() pauses at the first sign, so no timers are pending for
+      // pumpAndSettle). The player card is within the short ListView's build
+      // extent, so finders reach it without scrolling; scrollUntilVisible is
+      // ambiguous here because the TextField owns a second (internal)
+      // Scrollable inside the same subtree.
+      expect(find.text('Secuencia 1/1'), findsOneWidget);
+      expect(
+        tester.widget<Icon>(find.byIcon(Icons.play_circle)).color,
+        KineticColors.mint,
+      );
+      expect(
+        tester.widget<Icon>(find.byIcon(Icons.volume_up)).color,
+        KineticColors.iris,
+      );
+      _expectNoBingoInNavRail();
+
+      // -- Premium: paywall surfaces with the amber trial badge and the
+      // always-visible attribution (below the fold in the free-user layout,
+      // so scroll the paywall list until it builds into view).
+      await tester.tap(find.text('Premium'));
+      await tester.pumpAndSettle();
+      expect(find.text('Signo Premium'), findsOneWidget);
+      expect(find.text('USD 49.99/año'), findsOneWidget);
+      expect(find.text('7 días gratis'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text(kPoweredByRevenueCat),
+        200,
+        scrollable: find.descendant(
+          of: find.byType(ListView),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      expect(find.text(kPoweredByRevenueCat), findsOneWidget);
+      _expectNoBingoInNavRail();
+
+      // The shell survived the whole walk (IndexedStack contract intact).
+      expect(find.byType(SignoShell), findsOneWidget);
+    },
+  );
 }
