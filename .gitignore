@@ -1,0 +1,30 @@
+# --- Contenido pesado de terceros: FUENTE, nunca versionado ---
+# Descarga de trabajo del Drive de David (videos/imagenes de las ~200 señas).
+# Capa 3 de la decisión sdd/signo-mvp/video-hosting-decision:
+# Drive es la fuente; el repo solo lleva el subset de clips del demo (assets/).
+contenido-drive/
+drive/
+LSC-project/
+
+# --- Índices y estado de herramientas locales ---
+.codegraph/
+.atl/
+
+# --- Binarios sueltos que no aportan al código ---
+*.mp4
+*.mov
+*.avi
+*.webm
+*.mkv
+
+# --- Material personal: nunca en un repo publico ---
+# Transcripcion de un chat con datos personales (nombre, universidad, correo).
+*Shipaton*.md
+
+# --- Sistema operativo / editores ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp

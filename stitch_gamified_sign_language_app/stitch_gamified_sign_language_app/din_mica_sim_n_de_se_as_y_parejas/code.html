@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Space+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"surface-tint":"#00e29e","primary-container":"#00f0a8","inverse-surface":"#e0e2ec","surface-bright":"#363941","surface-container-lowest":"#0b0e15","on-secondary":"#2e009c","primary-fixed":"#46ffb8","inverse-on-surface":"#2d3038","surface-variant":"#32353c","on-primary":"#003824","surface-container-high":"#272a31","tertiary-container":"#ffcb6b","on-tertiary-fixed-variant":"#5e4200","on-secondary-container":"#baaeff","on-primary-fixed-variant":"#005236","on-surface-variant":"#b9cbbf","on-primary-container":"#006847","primary-fixed-dim":"#00e29e","secondary-container":"#4720ca","on-tertiary-container":"#775400","on-error":"#690005","on-surface":"#e0e2ec","on-tertiary-fixed":"#271900","tertiary-fixed-dim":"#ffba20","outline-variant":"#3b4a41","on-primary-fixed":"#002114","tertiary-fixed":"#ffdea8","error-container":"#93000a","surface-container-highest":"#32353c","on-secondary-fixed":"#1a0063","on-secondary-fixed-variant":"#441cc8","tertiary":"#ffedd3","primary":"#b7ffd9","surface-container":"#1d2027","on-error-container":"#ffdad6","on-background":"#e0e2ec","surface-container-low":"#191c23","on-tertiary":"#412d00","surface":"#10131a","outline":"#84958a","error":"#ffb4ab","secondary-fixed-dim":"#c9bfff","surface-dim":"#10131a","secondary":"#c9bfff","inverse-primary":"#006c4a","secondary-fixed":"#e5deff","background":"#10131a"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-md":"1rem","gutter":"1rem","space-2xl":"3rem","space-xs":"0.25rem","space-lg":"1.5rem","gutter-desktop":"2rem","margin":"1.25rem","space-sm":"0.5rem","gutter-tablet":"1.5rem","space-xl":"2rem","margin-desktop":"3rem","margin-tablet":"2rem"},"fontFamily":{"body-lg":["Plus Jakarta Sans"],"body-md":["Plus Jakarta Sans"],"headline-lg":["Space Grotesk"],"label-lg":["Plus Jakarta Sans"],"body-sm":["Plus Jakarta Sans"],"headline-lg-mobile":["Space Grotesk"],"label-sm":["Plus Jakarta Sans"],"headline-md":["Space Grotesk"],"display-lg":["Space Grotesk"],"display-lg-mobile":["Space Grotesk"],"stat-counter":["Space Grotesk"],"label-md":["Plus Jakarta Sans"],"headline-sm":["Space Grotesk"]},"fontSize":{"body-lg":["17px",{"lineHeight":"26px","letterSpacing":"-0.01em","fontWeight":"400"}],"body-md":["15px",{"lineHeight":"22px","letterSpacing":"0em","fontWeight":"400"}],"headline-lg":["32px",{"lineHeight":"38px","letterSpacing":"-0.02em","fontWeight":"700"}],"label-lg":["15px",{"lineHeight":"20px","letterSpacing":"0.02em","fontWeight":"700"}],"body-sm":["13px",{"lineHeight":"18px","letterSpacing":"0.01em","fontWeight":"400"}],"headline-lg-mobile":["26px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"700"}],"label-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.06em","fontWeight":"800"}],"headline-md":["22px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"display-lg":["44px",{"lineHeight":"52px","letterSpacing":"-0.03em","fontWeight":"700"}],"display-lg-mobile":["34px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"700"}],"stat-counter":["20px",{"lineHeight":"24px","letterSpacing":"-0.02em","fontWeight":"700"}],"label-md":["13px",{"lineHeight":"16px","letterSpacing":"0.03em","fontWeight":"700"}],"headline-sm":["18px",{"lineHeight":"24px","letterSpacing":"0em","fontWeight":"600"}]}}}};</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-gutter flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-xs"><img alt="Signo App Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnt4novl7gzy39F3Xu5JguZ94DJs2idqDNmBvBXq0BoOgsHZNu8OnnCuSHZRVrHLX1jhuGRM55DifCW2hVbVoijrNQzKibX2XxCp562KHxgCMaiBiDQCf9YIrrkHTU1kfke55z3Fr9qfqPHqt-b2udlRwcpmaG0DIKzK6kpBLw5XVCGJkZowrs6VNrY60zxgrH2gpnchFUPW1fjWvbhQ3UXZRsZfYBSgUtNjGfz3MnnEMNEPAeCsjF"/><button class="h-9 px-space-xs rounded-full bg-surface-container-high flex items-center gap-space-xs text-on-surface active:scale-95 transition-transform"><span class="px-1.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">ASL</span><span class="font-label-sm text-label-sm text-on-surface-variant">LSC</span></button></div><div class="flex items-center gap-space-xs"><div class="flex items-center gap-1 px-2 py-1 rounded-full bg-surface-container-low"><span class="text-tertiary-fixed-dim text-body-sm leading-none">🔥</span><span class="font-stat-counter text-stat-counter text-tertiary-fixed leading-none">14</span></div><div class="flex items-center gap-1 px-2 py-1 rounded-full bg-surface-container-low"><span class="text-primary-container text-body-sm leading-none">💎</span><span class="font-stat-counter text-stat-counter text-primary leading-none">420</span></div><div class="flex items-center gap-1 px-2 py-1 rounded-full bg-surface-container-low"><span class="text-error text-body-sm leading-none">❤️</span><span class="font-stat-counter text-stat-counter text-error leading-none">5</span></div><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1S466zjd48N26YWnGR4eUVO3oslC8JjEVQldQsa9e9f_oo_nFJWKIwLo6xiTrhvuQSNES7TdRBAL_BGproFhb29NkaYhCVP3HOPMm7q57QLxWAGeImly0szSbZLKFlQzewkiIUjr3XQziI9cfsR0WS4jFJGQ2Jbcsar4iw-WX24mso1Fs99YYXocfZULlaubNOttRg4sMC0IXfPXfDVXShNgEEUUxJxrmR57nME9Xy-hQ2PEuWrXn"/></div></div></header><main class="flex flex-col relative w-full pt-16 pb-20 bg-surface min-h-screen"><div class="flex flex-col w-full px-margin pb-space-2xl gap-space-lg select-none">
+<!-- Top Session Bar: Exit, Duolingo-style Progress Bar & Lives -->
+<div class="flex items-center justify-between gap-space-sm pt-space-xs">
+<button class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-on-surface active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+<div class="flex-1 h-3.5 bg-surface-container-highest rounded-full overflow-hidden relative shadow-inner p-0.5">
+<div class="h-full bg-primary-container rounded-full w-3/5 transition-all duration-500 relative">
+<div class="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent rounded-full"></div>
+</div>
+</div>
+<div class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-surface-container-high shadow-sm">
+<span class="text-error text-body-sm leading-none animate-pulse">❤️</span>
+<span class="font-stat-counter text-stat-counter text-error leading-none">4</span>
+</div>
+</div>
+<!-- Header Section -->
+<div class="flex flex-col gap-1 text-center">
+<div class="inline-flex items-center justify-center gap-1.5 self-center px-3 py-0.5 rounded-full bg-surface-container-high">
+<span class="text-primary-container text-body-sm">⚡</span>
+<span class="font-label-sm text-label-sm text-primary-container uppercase tracking-wider">Desafío Rápido</span>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface tracking-tight">Ronda 3: ¡Simón de Señas!</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xs mx-auto">Observa la secuencia de colores y repite las señas en el mismo orden.</p>
+</div>
+<!-- Central Simon Says Interactive 4-Quadrant Pad -->
+<div class="relative w-full max-w-[340px] mx-auto aspect-square flex items-center justify-center">
+<!-- Ambient Dynamic Glow Ring -->
+<div class="absolute -inset-2 rounded-full opacity-40 blur-xl transition-all duration-300 bg-primary-container pointer-events-none" id="simon-glow-ring"></div>
+<div class="w-full h-full rounded-full bg-surface-container-lowest p-3 relative shadow-2xl flex flex-col justify-between">
+<!-- Top Row Quadrants -->
+<div class="flex w-full h-[48%] gap-2.5">
+<!-- Verde: HOLA -->
+<button class="flex-1 rounded-tl-[100px] rounded-tr-2xl rounded-bl-2xl rounded-br-lg bg-surface-container-high relative overflow-hidden transition-all duration-150 active:translate-y-1 group" id="pad-green" onclick="pressPad('green')">
+<div class="absolute inset-0 bg-primary-container/20 group-hover:bg-primary-container/30 transition-colors"></div>
+<div class="simon-indicator absolute top-3 left-3 w-3 h-3 rounded-full bg-primary-container shadow-[0_0_8px_#00f0a8]"></div>
+<div class="relative z-10 flex flex-col items-center justify-center h-full gap-1 pt-2">
+<span class="material-symbols-outlined text-[36px] text-primary-container group-active:scale-110 transition-transform">waving_hand</span>
+<span class="font-headline-sm text-headline-sm text-primary tracking-wide">HOLA</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">ASL / LSC</span>
+</div>
+<div class="absolute bottom-0 inset-x-0 h-1 bg-primary-container/40"></div>
+</button>
+<!-- Azul / Púrpura: GRACIAS -->
+<button class="flex-1 rounded-tr-[100px] rounded-tl-2xl rounded-br-2xl rounded-bl-lg bg-surface-container-high relative overflow-hidden transition-all duration-150 active:translate-y-1 group" id="pad-blue" onclick="pressPad('blue')">
+<div class="absolute inset-0 bg-secondary-container/30 group-hover:bg-secondary-container/40 transition-colors"></div>
+<div class="simon-indicator absolute top-3 right-3 w-3 h-3 rounded-full bg-secondary shadow-[0_0_8px_#c9bfff]"></div>
+<div class="relative z-10 flex flex-col items-center justify-center h-full gap-1 pt-2">
+<span class="material-symbols-outlined text-[36px] text-secondary group-active:scale-110 transition-transform">sign_language</span>
+<span class="font-headline-sm text-headline-sm text-secondary-fixed tracking-wide">GRACIAS</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Barbilla al frente</span>
+</div>
+<div class="absolute bottom-0 inset-x-0 h-1 bg-secondary/40"></div>
+</button>
+</div>
+<!-- Center Hub Badge -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-surface-container-lowest p-1.5 shadow-2xl z-20 flex items-center justify-center">
+<div class="w-full h-full rounded-full bg-surface-container flex flex-col items-center justify-center text-center transition-colors" id="simon-status-disk">
+<span class="material-symbols-outlined text-primary-container text-[26px]" id="simon-status-icon">smart_display</span>
+<span class="font-label-sm text-label-sm text-on-surface uppercase tracking-wider" id="simon-status-text">Tu Turno</span>
+</div>
+</div>
+<!-- Bottom Row Quadrants -->
+<div class="flex w-full h-[48%] gap-2.5">
+<!-- Amarillo: POR FAVOR -->
+<button class="flex-1 rounded-bl-[100px] rounded-tl-2xl rounded-br-2xl rounded-tr-lg bg-surface-container-high relative overflow-hidden transition-all duration-150 active:translate-y-1 group" id="pad-yellow" onclick="pressPad('yellow')">
+<div class="absolute inset-0 bg-tertiary-container/20 group-hover:bg-tertiary-container/30 transition-colors"></div>
+<div class="simon-indicator absolute bottom-3 left-3 w-3 h-3 rounded-full bg-tertiary-fixed-dim shadow-[0_0_8px_#ffba20]"></div>
+<div class="relative z-10 flex flex-col items-center justify-center h-full gap-1 pb-2">
+<span class="material-symbols-outlined text-[36px] text-tertiary-fixed-dim group-active:scale-110 transition-transform">front_hand</span>
+<span class="font-headline-sm text-headline-sm text-tertiary-fixed tracking-wide">POR FAVOR</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Círculo en pecho</span>
+</div>
+<div class="absolute top-0 inset-x-0 h-1 bg-tertiary-container/40"></div>
+</button>
+<!-- Fucsia / Rosa: AMIGO -->
+<button class="flex-1 rounded-br-[100px] rounded-tr-2xl rounded-bl-2xl rounded-tl-lg bg-surface-container-high relative overflow-hidden transition-all duration-150 active:translate-y-1 group" id="pad-pink" onclick="pressPad('pink')">
+<div class="absolute inset-0 bg-error-container/40 group-hover:bg-error-container/50 transition-colors"></div>
+<div class="simon-indicator absolute bottom-3 right-3 w-3 h-3 rounded-full bg-error shadow-[0_0_8px_#ffb4ab]"></div>
+<div class="relative z-10 flex flex-col items-center justify-center h-full gap-1 pb-2">
+<span class="material-symbols-outlined text-[36px] text-error group-active:scale-110 transition-transform">diversity_3</span>
+<span class="font-headline-sm text-headline-sm text-error tracking-wide">AMIGO</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Dedos índices</span>
+</div>
+<div class="absolute top-0 inset-x-0 h-1 bg-error-container/60"></div>
+</button>
+</div>
+</div>
+</div>
+<!-- Replay Button -->
+<div class="flex justify-center -mt-2">
+<button class="px-4 py-1.5 rounded-full bg-surface-container-high text-on-surface flex items-center gap-1.5 active:scale-95 transition-transform hover:bg-surface-variant shadow-sm" onclick="playSequenceDemo()">
+<span class="material-symbols-outlined text-[18px] text-primary-container">replay</span>
+<span class="font-label-sm text-label-sm font-bold">Repetir Secuencia Simón</span>
+</button>
+</div>
+<!-- Relacionar Palabras: Match Game Deck -->
+<div class="flex flex-col gap-space-sm bg-surface-container-low p-space-md rounded-xl shadow-md">
+<!-- Mini Header & Combo Badge -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[20px]">join_inner</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Modo Relacionar Señas</span>
+</div>
+<div class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high shadow-sm">
+<span class="font-label-sm text-label-sm text-tertiary-fixed font-black">¡Racha x3!</span>
+<span class="text-tertiary-fixed-dim text-body-sm">🔥</span>
+<span class="font-label-sm text-label-sm text-primary-container ml-0.5 font-bold">+20 XP</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Toca una seña gráfica y luego su palabra correspondiente para enlazarlas:</p>
+<!-- Interactive Pairing Columns -->
+<div class="grid grid-cols-2 gap-space-sm items-center">
+<!-- Visual Hand Sign Cards -->
+<div class="flex flex-col gap-2">
+<button class="match-item flex items-center gap-2 p-2 rounded-lg bg-surface-container-high transition-all duration-150 active:translate-y-0.5 text-left relative overflow-hidden" id="card-sign-1" onclick="selectSign(1)">
+<div class="w-12 h-12 rounded-md bg-surface-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[28px] text-primary-container">home</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Seña #1</span>
+<span class="font-body-sm text-body-sm text-on-surface truncate">Techo en 'V'</span>
+</div>
+</button>
+<button class="match-item flex items-center gap-2 p-2 rounded-lg bg-surface-container-high transition-all duration-150 active:translate-y-0.5 text-left relative overflow-hidden" id="card-sign-2" onclick="selectSign(2)">
+<div class="w-12 h-12 rounded-md bg-surface-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[28px] text-tertiary-container">restaurant</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Seña #2</span>
+<span class="font-body-sm text-body-sm text-on-surface truncate">Mano a la boca</span>
+</div>
+</button>
+<button class="match-item flex items-center gap-2 p-2 rounded-lg bg-surface-container-high transition-all duration-150 active:translate-y-0.5 text-left relative overflow-hidden" id="card-sign-3" onclick="selectSign(3)">
+<div class="w-12 h-12 rounded-md bg-surface-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[28px] text-secondary">family_restroom</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Seña #3</span>
+<span class="font-body-sm text-body-sm text-on-surface truncate">Círculo con 'F'</span>
+</div>
+</button>
+</div>
+<!-- Word Bubbles -->
+<div class="flex flex-col gap-2">
+<button class="word-item flex items-center justify-between p-3 h-12 rounded-lg bg-surface-container-high text-on-surface font-headline-sm text-headline-sm transition-all duration-150 active:translate-y-0.5" id="card-word-comida" onclick="selectWord('comida')">
+<span>Comida</span>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">touch_app</span>
+</button>
+<button class="word-item flex items-center justify-between p-3 h-12 rounded-lg bg-surface-container-high text-on-surface font-headline-sm text-headline-sm transition-all duration-150 active:translate-y-0.5" id="card-word-casa" onclick="selectWord('casa')">
+<span>Casa</span>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">touch_app</span>
+</button>
+<button class="word-item flex items-center justify-between p-3 h-12 rounded-lg bg-surface-container-high text-on-surface font-headline-sm text-headline-sm transition-all duration-150 active:translate-y-0.5" id="card-word-familia" onclick="selectWord('familia')">
+<span>Familia</span>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">touch_app</span>
+</button>
+</div>
+</div>
+<!-- Live Pair Toast Notification -->
+<div class="h-6 flex items-center justify-center gap-1.5 opacity-0 transition-opacity duration-300" id="pair-feedback">
+<span class="material-symbols-outlined text-[16px] text-primary-container">check_circle</span>
+<span class="font-label-sm text-label-sm text-primary-container font-bold">¡Excelente asociación visual!</span>
+</div>
+</div>
+<!-- Bottom Sticky 3D Primary Button -->
+<div class="sticky bottom-2 inset-x-0 pt-2 pb-safe">
+<div class="relative w-full">
+<!-- 3D Lower Extrusion Rim Layer -->
+<div class="absolute inset-x-0 -bottom-1 h-14 rounded-full bg-on-primary-container"></div>
+<!-- Surface Interactive Button -->
+<button class="relative w-full h-14 rounded-full bg-gradient-to-r from-primary-container via-primary-fixed to-primary-tint text-on-primary flex items-center justify-center gap-2 shadow-lg transition-all duration-100 active:translate-y-1 font-label-lg text-label-lg font-black tracking-wide uppercase" onclick="checkFinalAnswer()">
+<span class="material-symbols-outlined text-[24px]">verified</span>
+<span>¡Comprobar Respuesta!</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+  // Interactive Simon State
+  const simonColors = ['green', 'yellow', 'blue', 'pink'];
+  const simonSequence = ['green', 'blue', 'yellow', 'pink'];
+  let playerSequence = [];
+
+  function highlightPad(color, duration = 350) {
+    const pad = document.getElementById('pad-' + color);
+    const ring = document.getElementById('simon-glow-ring');
+    if (!pad) return;
+
+    const originalScale = pad.style.transform;
+    pad.classList.add('brightness-150', 'scale-95');
+    if (ring) {
+      ring.style.opacity = '0.8';
+      if (color === 'green') ring.style.backgroundColor = '#00f0a8';
+      if (color === 'blue') ring.style.backgroundColor = '#c9bfff';
+      if (color === 'yellow') ring.style.backgroundColor = '#ffba20';
+      if (color === 'pink') ring.style.backgroundColor = '#ffb4ab';
+    }
+
+    setTimeout(() => {
+      pad.classList.remove('brightness-150', 'scale-95');
+      if (ring) ring.style.opacity = '0.35';
+    }, duration);
+  }
+
+  function playSequenceDemo() {
+    const diskText = document.getElementById('simon-status-text');
+    const diskIcon = document.getElementById('simon-status-icon');
+    if (diskText) diskText.innerText = 'Atento';
+    if (diskIcon) diskIcon.innerText = 'visibility';
+
+    simonSequence.forEach((color, idx) => {
+      setTimeout(() => {
+        highlightPad(color, 400);
+        if (idx === simonSequence.length - 1) {
+          setTimeout(() => {
+            if (diskText) diskText.innerText = 'Tu Turno';
+            if (diskIcon) diskIcon.innerText = 'touch_app';
+          }, 600);
+        }
+      }, (idx + 1) * 600);
+    });
+  }
+
+  function pressPad(color) {
+    highlightPad(color, 250);
+    playerSequence.push(color);
+    // Haptic buzz simulation
+    if (navigator.vibrate) navigator.vibrate(30);
+
+    const currentStep = playerSequence.length - 1;
+    if (playerSequence[currentStep] !== simonSequence[currentStep]) {
+      // Sequence Mismatch
+      playerSequence = [];
+      const disk = document.getElementById('simon-status-disk');
+      if (disk) {
+        disk.classList.add('bg-error-container');
+        setTimeout(() => disk.classList.remove('bg-error-container'), 400);
+      }
+    } else if (playerSequence.length === simonSequence.length) {
+      // Completed correctly!
+      const disk = document.getElementById('simon-status-disk');
+      if (disk) {
+        disk.classList.add('bg-primary-container');
+        const diskText = document.getElementById('simon-status-text');
+        if (diskText) diskText.innerText = '¡Genial!';
+        setTimeout(() => {
+          disk.classList.remove('bg-primary-container');
+          if (diskText) diskText.innerText = 'Listo';
+        }, 800);
+      }
+      playerSequence = [];
+    }
+  }
+
+  // Interactive Match Words State
+  let selectedSignId = null;
+  let selectedWordKey = null;
+  const matches = {
+    1: 'casa',
+    2: 'comida',
+    3: 'familia'
+  };
+
+  function selectSign(id) {
+    selectedSignId = id;
+    [1, 2, 3].forEach(i => {
+      const el = document.getElementById('card-sign-' + i);
+      if (el) el.classList.remove('bg-surface-variant', 'shadow-inner');
+    });
+    const current = document.getElementById('card-sign-' + id);
+    if (current) current.classList.add('bg-surface-variant', 'shadow-inner');
+    evaluatePair();
+  }
+
+  function selectWord(key) {
+    selectedWordKey = key;
+    ['comida', 'casa', 'familia'].forEach(k => {
+      const el = document.getElementById('card-word-' + k);
+      if (el) el.classList.remove('bg-surface-variant', 'shadow-inner');
+    });
+    const current = document.getElementById('card-word-' + key);
+    if (current) current.classList.add('bg-surface-variant', 'shadow-inner');
+    evaluatePair();
+  }
+
+  function evaluatePair() {
+    if (!selectedSignId || !selectedWordKey) return;
+
+    const feedback = document.getElementById('pair-feedback');
+    if (matches[selectedSignId] === selectedWordKey) {
+      // Match success
+      const signEl = document.getElementById('card-sign-' + selectedSignId);
+      const wordEl = document.getElementById('card-word-' + selectedWordKey);
+      
+      if (signEl) signEl.classList.add('bg-on-primary-fixed-variant', 'text-primary');
+      if (wordEl) wordEl.classList.add('bg-on-primary-fixed-variant', 'text-primary');
+      
+      if (feedback) feedback.style.opacity = '1';
+      if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
+
+      setTimeout(() => {
+        if (feedback) feedback.style.opacity = '0';
+      }, 1500);
+
+      selectedSignId = null;
+      selectedWordKey = null;
+    } else {
+      // Mismatch wobble
+      if (navigator.vibrate) navigator.vibrate(120);
+      selectedSignId = null;
+      selectedWordKey = null;
+    }
+  }
+
+  function checkFinalAnswer() {
+    const feedback = document.getElementById('pair-feedback');
+    if (feedback) {
+      feedback.innerHTML = `<span class="material-symbols-outlined text-[18px] text-primary-container">celebration</span><span class="font-label-sm text-label-sm text-primary-container font-black">¡Ronda 3 Completada con Éxito! +50 XP</span>`;
+      feedback.style.opacity = '1';
+    }
+    if (navigator.vibrate) navigator.vibrate([60, 100, 60]);
+  }
+
+  // Auto trigger initial Simon sequence demo on load
+  setTimeout(playSequenceDemo, 800);
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-1px_12px_rgba(0,0,0,0.2)]" data-active-classes="text-primary-container font-bold"><div class="flex justify-around items-center h-20 px-2"><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] min-h-[44px] text-on-surface-variant hover:text-on-surface transition-colors" data-path="learning-path" href="#"><span class="material-symbols-outlined text-[24px]">menu_book</span><span class="font-label-sm text-label-sm">Aprender</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-1 min-w-[56px] min-h-[44px] transition-colors text-primary-container font-bold" data-path="practice-simon" href="#"><span class="material-symbols-outlined text-[24px]">bolt</span><span class="font-label-sm text-label-sm">Práctica</span></a><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] min-h-[44px] text-on-surface-variant hover:text-on-surface transition-colors" data-path="alphabet-bingo" href="#"><span class="material-symbols-outlined text-[24px]">grid_view</span><span class="font-label-sm text-label-sm">Bingo</span></a><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] min-h-[44px] text-on-surface-variant hover:text-on-surface transition-colors" data-path="accessible-translator" href="#"><span class="material-symbols-outlined text-[24px]">sign_language</span><span class="font-label-sm text-label-sm">Traductor</span></a><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] min-h-[44px] text-on-surface-variant hover:text-on-surface transition-colors" data-path="premium-paywall" href="#"><span class="material-symbols-outlined text-[24px]">workspace_premium</span><span class="font-label-sm text-label-sm">Premium</span></a></div></nav></body></html>
