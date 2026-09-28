@@ -161,7 +161,8 @@ void main() {
     // M4: the Traductor tab now hosts the offline translator (input +
     // quick phrases + translate button) instead of the M1 placeholder.
     expect(find.text('Traducir'), findsOneWidget);
-    expect(find.text('Gracias'), findsOneWidget);
+    expect(find.text('gracias'), findsOneWidget);
+    expect(find.text('quiero aprender'), findsOneWidget);
     expect(find.byType(SignoShell), findsOneWidget);
   });
 
@@ -305,8 +306,10 @@ void main() {
       _expectNoBingoInNavRail();
 
       // -- Traductor: KineticButton CTA plus the real offline quick-phrase
-      // path ('Hola' matches the fixture lemma). load() pauses at the first
-      // sign, so no timers are pending for pumpAndSettle.
+      // path ('hola' matches the fixture lemma; the rest of the phrase falls
+      // outside the 2-sign smoke vocabulary and is reported, not hidden).
+      // load() pauses at the first sign, so no timers are pending for
+      // pumpAndSettle.
       await tester.tap(find.text('Traductor'));
       await tester.pumpAndSettle();
       expect(find.text('Traducir'), findsOneWidget);
@@ -317,7 +320,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      await tester.tap(find.widgetWithText(ActionChip, 'Hola'));
+      await tester.tap(find.widgetWithText(ActionChip, 'hola, buenos días'));
       await tester.pumpAndSettle();
       // The translated sequence renders through the REAL LocalMatcher path
       // (load() pauses at the first sign, so no timers are pending for

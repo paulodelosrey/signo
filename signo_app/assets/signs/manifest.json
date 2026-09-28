@@ -1,0 +1,380 @@
+﻿[
+    {
+        "asset":  "assets/signs/a.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "A.mp4",
+        "bytes":  14661
+    },
+    {
+        "asset":  "assets/signs/b.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "B.mp4",
+        "bytes":  14780
+    },
+    {
+        "asset":  "assets/signs/c.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "C.mp4",
+        "bytes":  14910
+    },
+    {
+        "asset":  "assets/signs/d.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "D.mp4",
+        "bytes":  15438
+    },
+    {
+        "asset":  "assets/signs/e.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "E.mp4",
+        "bytes":  15683
+    },
+    {
+        "asset":  "assets/signs/f.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "F.mp4",
+        "bytes":  15103
+    },
+    {
+        "asset":  "assets/signs/g.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "G.mp4",
+        "bytes":  66139
+    },
+    {
+        "asset":  "assets/signs/h.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "H.mp4",
+        "bytes":  14747
+    },
+    {
+        "asset":  "assets/signs/i.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "I.mp4",
+        "bytes":  16150
+    },
+    {
+        "asset":  "assets/signs/j.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "J.mp4",
+        "bytes":  86950
+    },
+    {
+        "asset":  "assets/signs/k.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "K.mp4",
+        "bytes":  15608
+    },
+    {
+        "asset":  "assets/signs/l.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "L.mp4",
+        "bytes":  14721
+    },
+    {
+        "asset":  "assets/signs/m.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "M.mp4",
+        "bytes":  15146
+    },
+    {
+        "asset":  "assets/signs/n.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "N.mp4",
+        "bytes":  15368
+    },
+    {
+        "asset":  "assets/signs/n_tilde.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "Ñ.mp4",
+        "bytes":  16000
+    },
+    {
+        "asset":  "assets/signs/o.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "O.mp4",
+        "bytes":  15598
+    },
+    {
+        "asset":  "assets/signs/p.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "P.mp4",
+        "bytes":  15628
+    },
+    {
+        "asset":  "assets/signs/q.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "Q.mp4",
+        "bytes":  14403
+    },
+    {
+        "asset":  "assets/signs/r.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "R.mp4",
+        "bytes":  14480
+    },
+    {
+        "asset":  "assets/signs/s.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "S.mp4",
+        "bytes":  18738
+    },
+    {
+        "asset":  "assets/signs/t.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "T.mp4",
+        "bytes":  15765
+    },
+    {
+        "asset":  "assets/signs/u.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "U.mp4",
+        "bytes":  15751
+    },
+    {
+        "asset":  "assets/signs/v.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "V.mp4",
+        "bytes":  15219
+    },
+    {
+        "asset":  "assets/signs/w.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "W.mp4",
+        "bytes":  15268
+    },
+    {
+        "asset":  "assets/signs/x.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "X.mp4",
+        "bytes":  15422
+    },
+    {
+        "asset":  "assets/signs/y.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "Y.mp4",
+        "bytes":  15346
+    },
+    {
+        "asset":  "assets/signs/z.mp4",
+        "folder":  "ABECEDARIO",
+        "source":  "Z.mp4",
+        "bytes":  77356
+    },
+    {
+        "asset":  "assets/signs/bienvenido.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "bienvenido.mp4",
+        "bytes":  210952
+    },
+    {
+        "asset":  "assets/signs/buenas_noches.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "buenas_noches.mp4",
+        "bytes":  105894
+    },
+    {
+        "asset":  "assets/signs/buenas_tardes.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "buenas_tardes.mp4",
+        "bytes":  104020
+    },
+    {
+        "asset":  "assets/signs/como_pregunta.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "cómo_pregunta.mp4",
+        "bytes":  179110
+    },
+    {
+        "asset":  "assets/signs/como_siente_pregunta.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "cómo_siente_pregunta.mp4",
+        "bytes":  87130
+    },
+    {
+        "asset":  "assets/signs/con_gusto.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "con_gusto.mp4",
+        "bytes":  98253
+    },
+    {
+        "asset":  "assets/signs/cual_pregunta.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "cuál_pregunta.mp4",
+        "bytes":  368161
+    },
+    {
+        "asset":  "assets/signs/cuando_pregunta.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "cuándo_pregunta.mp4",
+        "bytes":  57020
+    },
+    {
+        "asset":  "assets/signs/cuanto_pregunta.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "cuánto_pregunta.mp4",
+        "bytes":  88697
+    },
+    {
+        "asset":  "assets/signs/donde_pregunta.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "dónde_pregunta.mp4",
+        "bytes":  85580
+    },
+    {
+        "asset":  "assets/signs/gracias.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "gracias.mp4",
+        "bytes":  216237
+    },
+    {
+        "asset":  "assets/signs/hola.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "hola.mp4",
+        "bytes":  166604
+    },
+    {
+        "asset":  "assets/signs/para_que_pregunta.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "para_qué_pregunta.mp4",
+        "bytes":  75166
+    },
+    {
+        "asset":  "assets/signs/perdon.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "perdón.mp4",
+        "bytes":  117224
+    },
+    {
+        "asset":  "assets/signs/por_favor.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "por_favor.mp4",
+        "bytes":  201252
+    },
+    {
+        "asset":  "assets/signs/por_que_pregunta.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "por_qué_pregunta.mp4",
+        "bytes":  62779
+    },
+    {
+        "asset":  "assets/signs/que_paso_pregunta.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "qué_pasó_pregunta.mp4",
+        "bytes":  97398
+    },
+    {
+        "asset":  "assets/signs/que_pregunta.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "qué_pregunta.mp4",
+        "bytes":  89731
+    },
+    {
+        "asset":  "assets/signs/quien_pregunta.mp4",
+        "folder":  "FRASES COMUNES",
+        "source":  "quién_pregunta.mp4",
+        "bytes":  58486
+    },
+    {
+        "asset":  "assets/signs/aprender.mp4",
+        "folder":  "ACCIONES",
+        "source":  "aprender.mp4",
+        "bytes":  76255
+    },
+    {
+        "asset":  "assets/signs/ayudar.mp4",
+        "folder":  "ACCIONES",
+        "source":  "ayudar.mp4",
+        "bytes":  157998
+    },
+    {
+        "asset":  "assets/signs/bailar.mp4",
+        "folder":  "ACCIONES",
+        "source":  "bailar.mp4",
+        "bytes":  131105
+    },
+    {
+        "asset":  "assets/signs/buscar.mp4",
+        "folder":  "ACCIONES",
+        "source":  "buscar.mp4",
+        "bytes":  66529
+    },
+    {
+        "asset":  "assets/signs/comprar.mp4",
+        "folder":  "ACCIONES",
+        "source":  "comprar.mp4",
+        "bytes":  111243
+    },
+    {
+        "asset":  "assets/signs/dar.mp4",
+        "folder":  "ACCIONES",
+        "source":  "dar.mp4",
+        "bytes":  117462
+    },
+    {
+        "asset":  "assets/signs/dormir.mp4",
+        "folder":  "ACCIONES",
+        "source":  "dormir.mp4",
+        "bytes":  65277
+    },
+    {
+        "asset":  "assets/signs/entender.mp4",
+        "folder":  "ACCIONES",
+        "source":  "entender.mp4",
+        "bytes":  209849
+    },
+    {
+        "asset":  "assets/signs/esperar.mp4",
+        "folder":  "ACCIONES",
+        "source":  "esperar.mp4",
+        "bytes":  180141
+    },
+    {
+        "asset":  "assets/signs/estudiar.mp4",
+        "folder":  "ACCIONES",
+        "source":  "estudiar.mp4",
+        "bytes":  81186
+    },
+    {
+        "asset":  "assets/signs/invitar.mp4",
+        "folder":  "ACCIONES",
+        "source":  "invitar.mp4",
+        "bytes":  57114
+    },
+    {
+        "asset":  "assets/signs/ir.mp4",
+        "folder":  "ACCIONES",
+        "source":  "Ir.mp4",
+        "bytes":  97975
+    },
+    {
+        "asset":  "assets/signs/pagar.mp4",
+        "folder":  "ACCIONES",
+        "source":  "pagar.mp4",
+        "bytes":  56356
+    },
+    {
+        "asset":  "assets/signs/pensar.mp4",
+        "folder":  "ACCIONES",
+        "source":  "pensar.mp4",
+        "bytes":  54047
+    },
+    {
+        "asset":  "assets/signs/se_va.mp4",
+        "folder":  "ACCIONES",
+        "source":  "se_va.mp4",
+        "bytes":  92774
+    },
+    {
+        "asset":  "assets/signs/seguir.mp4",
+        "folder":  "ACCIONES",
+        "source":  "seguir.mp4",
+        "bytes":  133980
+    },
+    {
+        "asset":  "assets/signs/vender.mp4",
+        "folder":  "ACCIONES",
+        "source":  "vender.mp4",
+        "bytes":  145215
+    }
+]

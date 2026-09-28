@@ -166,7 +166,8 @@ class _TreeBody extends ConsumerWidget {
         ],
         const SizedBox(height: 8),
         Text(
-          'Contenido: MonikLSC L1 · L3 · L4',
+          'Contenido: MonikLSC L1–L5 · señas en video del abecedario, '
+              'frases y acciones',
           textAlign: TextAlign.center,
           style: textTheme.labelSmall?.copyWith(
             color: KineticColors.textLow,

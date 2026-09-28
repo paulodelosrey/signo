@@ -97,8 +97,96 @@ void main() {
       expect(result.perLesson.containsKey(3), isFalse);
     });
 
-    test('marks hasVideo false because no cell references a media file', () {
+    test('leaves hasVideo false without a clip manifest', () {
       expect(result.signs.every((parser.CompiledSign s) => !s.hasVideo), isTrue);
+      expect(result.assets.matchedIds, isEmpty);
+    });
+
+    test('slugify folds glosses, lemmas and clip stems to one key', () {
+      expect(parser.slugify('BUENOS-DIAS'), 'buenos_dias');
+      expect(parser.slugify('cómo_pregunta'), 'como_pregunta');
+      expect(parser.slugify('Perdón'), 'perdon');
+    });
+
+    test('parses the manifest into slugs with folder provenance', () {
+      final List<parser.SignClip> clips = parser.parseSignManifest('''
+[{"asset":"assets/signs/que_pregunta.mp4","folder":"FRASES COMUNES",
+  "source":"qué_pregunta.mp4","bytes":89731},
+ {"asset":"assets/signs/n_tilde.mp4","folder":"ABECEDARIO",
+  "source":"Ñ.mp4","bytes":16000}]
+''');
+
+      expect(clips.map((parser.SignClip c) => c.slug),
+          <String>['que_pregunta', 'n_tilde']);
+      expect(clips.first.isPregunta, isTrue);
+      expect(clips.last.isPregunta, isFalse);
+      expect(clips.first.assetPath, 'assets/signs/que_pregunta.mp4');
+    });
+
+    test('expands the aggregate alphabet row into one sign per clip', () {
+      final List<parser.SignClip> clips = <parser.SignClip>[
+        for (final String letter in <String>['a', 'b', 'c', 'n', 'n_tilde'])
+          parser.SignClip(
+            slug: letter,
+            assetPath: 'assets/signs/$letter.mp4',
+            folder: 'ABECEDARIO',
+          ),
+      ];
+      final parser.CompileResult alphabet = parser.compileVocab(
+        'Lección #,Subtema,Video / seña disponible,Estado\n'
+        'Lección 1,Abecedario,Abecedarioa(A-Z),\n'
+        'Lección 1,Saludos informales,Hola,Registrado\n',
+        clips: clips,
+      );
+
+      expect(alphabet.signs.length, 6); // 5 letters + HOLA, no aggregate row.
+      expect(alphabet.signs.map((parser.CompiledSign s) => s.gloss).toList(),
+          <String>['A', 'B', 'C', 'N', 'Ñ', 'HOLA']);
+      expect(alphabet.signs[4].lemmas, <String>['ñ']);
+      expect(alphabet.signs[4].asset, 'assets/signs/n_tilde.mp4');
+      expect(alphabet.signs[4].hasVideo, isTrue);
+      // The last row keeps the sequential id scheme.
+      expect(alphabet.signs.last.id, 'l1-006');
+    });
+
+    test('*_pregunta clips map onto the existing sign instead of duplicating '
+        'it', () {
+      final parser.CompileResult mapped = parser.compileVocab(
+        'Lección #,Subtema,Video / seña disponible,Estado\n'
+        'Lección 5,Preguntas,¿Dónde?,Registrado\n',
+        clips: <parser.SignClip>[
+          parser.SignClip(
+            slug: 'donde_pregunta',
+            assetPath: 'assets/signs/donde_pregunta.mp4',
+            folder: 'FRASES COMUNES',
+          ),
+        ],
+      );
+
+      expect(mapped.signs.length, 1, reason: 'the question clip must not '
+          'compile into a second sign');
+      expect(mapped.signs.single.gloss, 'DONDE');
+      expect(mapped.signs.single.asset, 'assets/signs/donde_pregunta.mp4');
+      expect(mapped.assets.matchedIds, <String>['l5-001']);
+    });
+
+    test('a clip with no matching sign is reported, never silently dropped',
+        () {
+      final parser.CompileResult orphan = parser.compileVocab(
+        'Lección #,Subtema,Video / seña disponible,Estado\n'
+        'Lección 5,Preguntas,¿Dónde?,Registrado\n',
+        clips: <parser.SignClip>[
+          parser.SignClip(
+            slug: 'esperar',
+            assetPath: 'assets/signs/esperar.mp4',
+            folder: 'ACCIONES',
+          ),
+        ],
+      );
+
+      expect(orphan.signs.single.hasVideo, isFalse);
+      expect(orphan.assets.unmatchedSlugs, <String>['esperar (ACCIONES)']);
+      expect(parser.buildReport(orphan), contains('esperar (ACCIONES)'));
     });
 
     test('report renderer mentions totals and duplicates', () {

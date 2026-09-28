@@ -4,17 +4,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/theme.dart';
 import '../../core/lsc_vocab/lsc_vocab.dart';
 import '../../widgets/kinetic_button.dart';
+import '../../widgets/sign_video_player.dart';
 import 'curriculum.dart' show displayWordFor;
 import 'lesson_end_screen.dart';
 import 'lesson_session.dart';
 
-/// Renders one sign: the future home of the bundled video clip.
+/// Renders one sign: its bundled video clip, or the text-mode card.
 ///
-/// VIDEO FALLBACK (T4 seam): every entry currently has `hasVideo == false`,
-/// so exercises render in TEXT MODE — a big kinetic card carrying the gloss
-/// label styled as the video placeholder, with a subtle "video en curaduría"
-/// note. When curation fills `asset`/`hasVideo`, the video player slots into
-/// the marked branch below and NO exercise flow changes.
+/// VIDEO MODE (T4): when curation fills `asset` with `hasVideo == true` the
+/// clip is played through [SignVideoPlayer] inside the very same Kinetic
+/// surface. Every entry still has `hasVideo == false` today, so exercises
+/// render in TEXT MODE — a big kinetic card carrying the gloss label styled as
+/// the video placeholder, with a subtle "video en curaduría" note. A declared
+/// clip that is missing at runtime also falls back to that same text mode.
 class SignView extends StatelessWidget {
   const SignView({super.key, required this.entry, this.compact = false});
 
@@ -26,9 +28,9 @@ class SignView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
-    // TODO(T4): replace this branch with the video player when clips land:
-    // if (entry.hasVideo && entry.asset != null) → VideoPlayerCard(entry).
-    // The flow above (prompt → answer → feedback) stays untouched.
+    final String? asset = entry.asset;
+    // Text mode is the fallback AND the current default: it stays byte-for-byte
+    // what it was before the video player existed.
     final Widget content = Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -78,7 +80,17 @@ class SignView extends StatelessWidget {
         color: KineticColors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(KineticRadii.lg),
       ),
-      child: content,
+      // The clip is confined to the same padded box, so the surface height
+      // (220 prompt / grid cell compact) and the Kinetic tokens are
+      // untouched. Missing asset => SignVideoPlayer renders `content`.
+      child: entry.hasVideo && asset != null
+          ? SignVideoPlayer(
+              key: ValueKey<String>(asset),
+              assetPath: asset,
+              fallback: content,
+              autoplay: !compact,
+            )
+          : content,
     );
 
     // Compact cards fill their grid cell; the prompt card keeps a fixed

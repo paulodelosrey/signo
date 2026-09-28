@@ -15,13 +15,14 @@ import 'package:signo_app/features/translator/translator_screen.dart';
 const String _fixtureJson = '''
 {
   "source": "test fixture",
-  "count": 5,
+  "count": 6,
   "signs": [
     {"id": "l1-001", "gloss": "HOLA", "lemmas": ["hola"], "lesson": 1, "subtema": "Saludos informales", "asset": null, "releasePath": null, "trimStartMs": null, "trimEndMs": null, "hasVideo": false},
     {"id": "l1-002", "gloss": "GRACIAS", "lemmas": ["gracias"], "lesson": 1, "subtema": "Frases comunes", "asset": null, "releasePath": null, "trimStartMs": null, "trimEndMs": null, "hasVideo": false},
     {"id": "l1-003", "gloss": "CASA", "lemmas": ["casa"], "lesson": 1, "subtema": "Lugar", "asset": null, "releasePath": null, "trimStartMs": null, "trimEndMs": null, "hasVideo": false},
     {"id": "l1-004", "gloss": "AYUDA", "lemmas": ["ayuda"], "lesson": 1, "subtema": "Frases comunes", "asset": null, "releasePath": null, "trimStartMs": null, "trimEndMs": null, "hasVideo": false},
-    {"id": "l1-005", "gloss": "CHAUV", "lemmas": ["chau"], "lesson": 1, "subtema": "Despedida", "asset": null, "releasePath": null, "trimStartMs": null, "trimEndMs": null, "hasVideo": false}
+    {"id": "l1-005", "gloss": "CHAUV", "lemmas": ["chau"], "lesson": 1, "subtema": "Despedida", "asset": null, "releasePath": null, "trimStartMs": null, "trimEndMs": null, "hasVideo": false},
+    {"id": "l3-001", "gloss": "APRENDER", "lemmas": ["aprender"], "lesson": 3, "subtema": "Acciones", "asset": null, "releasePath": null, "trimStartMs": null, "trimEndMs": null, "hasVideo": false}
   ]
 }
 ''';
@@ -144,10 +145,11 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Traducir'), findsOneWidget);
-    expect(find.text('Hola'), findsOneWidget);
-    expect(find.text('Buenos días'), findsOneWidget);
-    expect(find.text('Gracias'), findsOneWidget);
-    expect(find.text('¿Cómo estás?'), findsOneWidget);
+    // The four seeded quick phrases, in order.
+    expect(find.text('hola, buenos días'), findsOneWidget);
+    expect(find.text('gracias'), findsOneWidget);
+    expect(find.text('¿cómo estás?'), findsOneWidget);
+    expect(find.text('quiero aprender'), findsOneWidget);
     expect(find.text('Secuencia 1/1'), findsNothing);
   });
 
@@ -159,7 +161,8 @@ void main() {
 
     expect(find.text('Secuencia 1/2'), findsOneWidget);
     expect(find.text('HOLA'), findsOneWidget);
-    // SignView text-mode seam is in place until T4 videos land.
+    // The fixture entries declare no clip, so SignView renders the text-mode
+    // card; a real clip (hasVideo) swaps in the player inside the same box.
     expect(find.text('video en curaduría'), findsOneWidget);
     expect(tts.spoken, isEmpty); // nothing speaks until play is pressed
   });
@@ -184,6 +187,10 @@ void main() {
       await _pumpTranslator(tester, tts);
       await _translate(tester, 'hola gracias casa');
 
+      // The seeded phrases wrap onto a second row, so the player card sits
+      // lower in the 600px test viewport: scroll it into view before tapping.
+      await tester.ensureVisible(find.byTooltip('Reproducir'));
+      await tester.pump();
       await tester.tap(find.byTooltip('Reproducir'));
       await tester.pump(); // rebuild after play — NO pumpAndSettle: the
       // periodic playback timer would never let it settle.
@@ -211,9 +218,13 @@ void main() {
     await _pumpTranslator(tester, tts);
     await _translate(tester, 'hola gracias');
 
+    await tester.ensureVisible(find.byTooltip('Reproducir'));
+    await tester.pump();
     await tester.tap(find.byTooltip('Reproducir'));
     await tester.pump();
 
+    await tester.ensureVisible(find.text('0.75x'));
+    await tester.pump();
     await tester.tap(find.text('0.75x'));
     await tester.pump();
 
@@ -236,17 +247,36 @@ void main() {
   ) async {
     await _pumpTranslator(tester, tts);
 
-    await tester.tap(find.text('Gracias'));
+    await tester.tap(find.widgetWithText(ActionChip, 'gracias'));
     await tester.pumpAndSettle();
 
     expect(
       find.descendant(
         of: find.byType(TextField),
-        matching: find.text('Gracias'),
+        matching: find.text('gracias'),
       ),
       findsOneWidget,
     );
     expect(find.text('Secuencia 1/1'), findsOneWidget);
     expect(find.text('GRACIAS'), findsOneWidget);
+  });
+
+  testWidgets('a phrase with out-of-vocabulary words is honest about it', (
+    WidgetTester tester,
+  ) async {
+    await _pumpTranslator(tester, tts);
+
+    // `quiero` is deliberately outside the curated vocabulary.
+    await tester.tap(find.widgetWithText(ActionChip, 'quiero aprender'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Se omitieron palabras fuera de vocabulario: quiero.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Secuencia 1/1'), findsOneWidget);
+    expect(find.text('APRENDER'), findsOneWidget);
   });
 }

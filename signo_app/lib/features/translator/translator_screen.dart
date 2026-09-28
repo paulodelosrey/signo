@@ -20,10 +20,13 @@ class _QuickPhrase {
 }
 
 const List<_QuickPhrase> _kQuickPhrases = <_QuickPhrase>[
-  _QuickPhrase('👋', 'Hola'),
-  _QuickPhrase('🌅', 'Buenos días'),
-  _QuickPhrase('🙏', 'Gracias'),
-  _QuickPhrase('❓', '¿Cómo estás?'),
+  _QuickPhrase('👋', 'hola, buenos días'),
+  _QuickPhrase('🙏', 'gracias'),
+  _QuickPhrase('🙂', '¿cómo estás?'),
+  // `quiero` is outside the curated vocabulary on purpose: tapping this chip
+  // demonstrates the honest "Se omitieron palabras fuera de vocabulario"
+  // notice instead of hiding the gap.
+  _QuickPhrase('🎓', 'quiero aprender'),
 ];
 
 /// Traductor tab: offline-first text → LSC sequence translator.
@@ -205,9 +208,10 @@ class _TranslatorBodyState extends ConsumerState<_TranslatorBody> {
   }
 }
 
-/// `Secuencia n/n` playback card: current sign (SignView text-mode seam,
-/// TODO(T4) swaps in the video player), progress dots, play/pause, speed
-/// toggle and repeat-audio controls.
+/// `Secuencia n/n` playback card: current sign ([SignView] plays the bundled
+/// clip when the entry has one, and the text-mode card otherwise), progress
+/// dots, play/pause, speed toggle and repeat-audio controls. The card owns the
+/// sign cadence; the clip simply loops until the index advances.
 class _PlayerCard extends ConsumerWidget {
   const _PlayerCard();
 

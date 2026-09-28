@@ -17,11 +17,11 @@ VocabEntry entry(
       hasVideo: false,
     );
 
-/// Fixture mirroring the real MonikLSC shape: U1/U2 split L1 by subtema,
+/// Fixture mirroring the real MonikLSC shape: U1/U2/U5 split L1 by subtema,
 /// U3 = L3, U4 = L4; L2 and L5 rows exist but feed NO unit. Row order is
 /// CSV order — the determinism source.
 final List<VocabEntry> fixture = <VocabEntry>[
-  // L1 — U1 subtemas (11 signs: 2+2+3+1+3).
+  // L1 — U1 subtemas (10 signs: 2+2+3+3) plus one U5 alphabet sign.
   entry('s1', 'HOLA', 1, 'Saludos informales'),
   entry('s2', 'QUE-TAL', 1, 'Saludos informales'),
   entry('s3', 'CHAU', 1, 'Despedida'),
@@ -88,16 +88,17 @@ Curriculum build() => buildCurriculum(fixture);
 
 void main() {
   group('buildCurriculum', () {
-    test('produces exactly the 4 designed units with designed titles', () {
+    test('produces exactly the 5 designed units with designed titles', () {
       final Curriculum curriculum = build();
-      expect(curriculum.units.length, 4);
+      expect(curriculum.units.length, 5);
       expect(
         curriculum.units.map((CurriculumUnit u) => u.title).toList(),
         <String>[
-          'Alfabeto y saludos',
+          'Saludos y expresiones',
           'Números, colores y familia',
           'Tiempo, lugares y acciones',
           'Comida y animales',
+          'Abecedario (dactilología)',
         ],
       );
     });
@@ -107,11 +108,45 @@ void main() {
       final List<PathNode> lessons = u1.nodes
           .where((PathNode n) => !n.isBoss)
           .toList();
-      // 11 signs in subtemas of 2/2/3/1/3 (CSV order) merge greedily ≤ 8.
+      // 10 signs in subtemas of 2/2/3/3 (CSV order) merge greedily ≤ 8.
       expect(lessons.length, 2);
-      expect(lessons[0].signs.length, 8);
+      expect(lessons[0].signs.length, 7);
       expect(lessons[1].signs.length, 3);
-      expect(lessons.expand((PathNode n) => n.signs).length, 11);
+      expect(lessons.expand((PathNode n) => n.signs).length, 10);
+    });
+
+    test('U5 takes the alphabet out of U1 as its own dactilology unit', () {
+      final Curriculum curriculum = build();
+      final CurriculumUnit u5 = curriculum.units[4];
+      expect(u5.number, 5);
+      expect(
+        u5.allSigns.map((VocabEntry e) => e.id).toList(),
+        <String>['s8'],
+      );
+      expect(u5.boss, isNotNull);
+      // The alphabet is not duplicated inside U1.
+      expect(
+        curriculum.units[0].allSigns.map((VocabEntry e) => e.id),
+        isNot(contains('s8')),
+      );
+    });
+
+    test('a full 27-letter alphabet splits into capped lessons plus a BOSS',
+        () {
+      final List<VocabEntry> letters = <VocabEntry>[
+        for (int i = 0; i < 27; i++)
+          entry('L${i.toString().padLeft(2, '0')}', 'LETRA$i', 1, 'Abecedario'),
+      ];
+      final CurriculumUnit u5 = buildCurriculum(letters).units[4];
+      final List<PathNode> lessons =
+          u5.nodes.where((PathNode n) => !n.isBoss).toList();
+
+      expect(u5.allSigns.length, 27);
+      // ceil(27 / 8) = 4 lessons, none over the cap, and a BOSS after them.
+      expect(lessons.length, 4);
+      expect(lessons.every(
+          (PathNode n) => n.signs.length <= kMaxSignsPerLesson), isTrue);
+      expect(u5.nodes.last.isBoss, isTrue);
     });
 
     test('every lesson node holds at most kMaxSignsPerLesson signs', () {
@@ -188,7 +223,7 @@ void main() {
       expect(ids, <String>[
         for (final PathNode node in build().allNodes) node.id,
       ]);
-      expect(ids.where((String id) => id.endsWith('boss')).length, 4);
+      expect(ids.where((String id) => id.endsWith('boss')).length, 5);
     });
 
     test('building twice yields identical structures', () {

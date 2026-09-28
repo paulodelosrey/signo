@@ -32,7 +32,7 @@ class PathNode {
   bool get isBoss => kind == NodeKind.boss;
 }
 
-/// One of the four units of the path: a header card plus a serpentine
+/// One of the units of the path: a header card plus a serpentine
 /// sequence of lesson nodes ending in a BOSS review.
 class CurriculumUnit {
   const CurriculumUnit({
@@ -41,7 +41,7 @@ class CurriculumUnit {
     required this.nodes,
   });
 
-  /// 1-based unit number (UNIDAD 1..4).
+  /// 1-based unit number (UNIDAD 1..5).
   final int number;
   final String title;
   final List<PathNode> nodes;
@@ -67,7 +67,7 @@ class CurriculumUnit {
       nodes.every((PathNode node) => completedNodeIds.contains(node.id));
 }
 
-/// The full 4-unit learning path.
+/// The full learning path.
 class Curriculum {
   const Curriculum(this.units);
 
@@ -117,7 +117,7 @@ class _UnitConfig {
   final int lessonNumber;
 
   /// When non-null, only these normalized subtemas of [lessonNumber] are
-  /// included (U1/U2 split MonikLSC L1 between them).
+  /// included (U1/U2/U5 split MonikLSC L1 between them).
   final Set<String>? subtemaAllowList;
 
   bool accepts(VocabEntry entry) {
@@ -133,8 +133,7 @@ class _UnitConfig {
 }
 
 const List<_UnitConfig> _unitConfigs = <_UnitConfig>[
-  _UnitConfig(1, 'Alfabeto y saludos', 1, <String>{
-    'abecedario',
+  _UnitConfig(1, 'Saludos y expresiones', 1, <String>{
     'saludos informales',
     'saludos formales',
     'despedida',
@@ -148,6 +147,9 @@ const List<_UnitConfig> _unitConfigs = <_UnitConfig>[
   }),
   _UnitConfig(3, 'Tiempo, lugares y acciones', 3, null),
   _UnitConfig(4, 'Comida y animales', 4, null),
+  // Dactilología: the 27 alphabet clips the compiler expands out of the
+  // single `Abecedarioa(A-Z)` spreadsheet row, each with its own video.
+  _UnitConfig(5, 'Abecedario (dactilología)', 1, <String>{'abecedario'}),
 ];
 
 /// Splits [signs] into [parts] near-equal chunks (deterministic; leftovers
@@ -169,7 +171,7 @@ const List<String> _roman = <String>[
   'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
 ];
 
-/// Builds the 4-unit path from the compiled vocabulary.
+/// Builds the 5-unit path from the compiled vocabulary.
 ///
 /// Determinism contract: everything derives from the CSV order of [entries]
 /// — subtema grouping keeps first-appearance order, oversized subtemas split

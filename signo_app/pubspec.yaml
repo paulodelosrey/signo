@@ -38,6 +38,9 @@ dependencies:
   google_fonts: ^8.2.1
   shared_preferences: ^2.5.5
   flutter_tts: ^4.2.5
+  purchases_flutter: ^10.13.2
+  purchases_ui_flutter: ^10.13.2
+  video_player: ^2.14.0
 
 dev_dependencies:
   flutter_test:
@@ -64,6 +67,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/content/
+    - assets/signs/
     - google_fonts/
 
   # An image asset can refer to one or more resolution-specific "variants", see

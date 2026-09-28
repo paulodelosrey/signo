@@ -11,11 +11,21 @@ LSC-project/
 .atl/
 
 # --- Binarios sueltos que no aportan al código ---
+# Excluye la fuente cruda de Drive (959 MB) pero NUNCA los clips ya
+# comprimidos: las reglas exigen que el repo contenga los assets necesarios.
 *.mp4
 *.mov
 *.avi
 *.webm
 *.mkv
+!signo_app/assets/signs/*.mp4
+
+# --- Secretos: jamas en git ---
+# Las keys reales viven solo en la maquina del desarrollador y se inyectan con
+# --dart-define. La plantilla versionada es secrets.local.example.json.
+secrets.local.json
+.env
+.env.*
 
 # --- Material personal: nunca en un repo publico ---
 # Transcripcion de un chat con datos personales (nombre, universidad, correo).
