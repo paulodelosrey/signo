@@ -30,6 +30,15 @@ class SequencePlayerState {
   /// `Secuencia n/n` indicator (idle shows `Secuencia 0/0`).
   String get counterLabel => 'Secuencia ${index + 1}/${sequence.length}';
 
+  /// Whether [SequencePlayerController.previous] can step.
+  bool get canGoPrevious => hasSequence && index >= 0;
+
+  /// Whether [SequencePlayerController.next] can step.
+  ///
+  /// True even at the last sign: stepping forward from the end restarts the
+  /// sequence, the same replay affordance as `play`.
+  bool get canGoNext => hasSequence && index >= 0;
+
   Gloss? get current =>
       hasSequence && index >= 0 && index < sequence.length
       ? sequence[index]
@@ -113,6 +122,30 @@ class SequencePlayerController extends Notifier<SequencePlayerState> {
 
   /// Re-speaks the current sign (speaker button).
   void repeatAudio() => _speakCurrent();
+
+  /// Manual forward step, driven by the on-screen next control.
+  ///
+  /// Unlike [advance] — which the autoplay timer calls and which stops at the
+  /// end — this wraps: stepping forward from the last sign starts over. It
+  /// works whether or not playback is running and never touches [playing], so
+  /// the user can browse a sequence while paused.
+  void next() => _step(1);
+
+  /// Manual backward step, driven by the on-screen previous control. Wraps
+  /// from the first sign to the last one.
+  void previous() => _step(-1);
+
+  void _step(int delta) {
+    if (!state.hasSequence || state.index < 0) {
+      return;
+    }
+    final int length = state.sequence.length;
+    final int index = (state.index + delta) % length;
+    state = state.copyWith(index: index < 0 ? index + length : index);
+    if (state.playing) {
+      _speakCurrent();
+    }
+  }
 
   void _speakCurrent() {
     final Gloss? current = state.current;

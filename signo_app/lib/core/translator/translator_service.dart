@@ -71,9 +71,24 @@ class TranslatorService {
 
 /// Builds the translator from the compiled content assets.
 ///
+/// GATE D of the video-only rule, and it lives HERE, in the index handed to
+/// [LocalMatcher] — deliberately not as a filter inside the matcher. The
+/// matcher already asks the index to resolve every token, so handing it an
+/// index whose lemma map cannot resolve a clip-less word makes
+/// `mapTokensToGlosses` classify those words as `unknownWords` by
+/// construction, and the EXISTING notice ("Se omitieron palabras fuera de
+/// vocabulario: …") then tells the user exactly what happened. A second
+/// filtering layer in the matcher would have to duplicate that classification
+/// and would produce the same outcome with no way to explain it to the user.
+///
+/// `copyWithVideoOnly()` rather than `VocabIndex.build(...)`: the asset was
+/// already parsed into `vocabIndexProvider`, and this reuses those entries
+/// instead of decoding `vocab.json` a second time on every app start.
+///
 /// The remote slot holds the keyless [GeminiStrategy] stub: the key arrives
 /// at build time via `--dart-define=GEMINI_API_KEY=...` (never committed);
 /// with no key the stub fails fast and the service always answers locally.
+/// Unaffected by the video-only index — it never touches the vocabulary.
 final FutureProvider<TranslatorService> translatorServiceProvider =
     FutureProvider<TranslatorService>((Ref ref) async {
       final VocabIndex index = await ref.watch(vocabIndexProvider.future);
@@ -81,7 +96,7 @@ final FutureProvider<TranslatorService> translatorServiceProvider =
         grammarRuleSetProvider.future,
       );
       return TranslatorService(
-        localStrategy: LocalMatcher(index: index, rules: rules),
+        localStrategy: LocalMatcher(index: index.copyWithVideoOnly(), rules: rules),
         remoteStrategy: GeminiStrategy(
           apiKey: const String.fromEnvironment('GEMINI_API_KEY'),
         ),

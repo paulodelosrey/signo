@@ -11,22 +11,37 @@ import '../../widgets/kinetic_button.dart';
 import '../learn/lesson_screen.dart';
 import 'player_controller.dart';
 
-/// Pictogram quick phrases (spec: pictogram quick phrases MUST exist).
-class _QuickPhrase {
-  const _QuickPhrase(this.emoji, this.phrase);
+/// Pictogram quick phrase (spec: pictogram quick phrases MUST exist).
+class QuickPhrase {
+  const QuickPhrase(this.emoji, this.phrase);
 
   final String emoji;
   final String phrase;
 }
 
-const List<_QuickPhrase> _kQuickPhrases = <_QuickPhrase>[
-  _QuickPhrase('👋', 'hola, buenos días'),
-  _QuickPhrase('🙏', 'gracias'),
-  _QuickPhrase('🙂', '¿cómo estás?'),
-  // `quiero` is outside the curated vocabulary on purpose: tapping this chip
-  // demonstrates the honest "Se omitieron palabras fuera de vocabulario"
-  // notice instead of hiding the gap.
-  _QuickPhrase('🎓', 'quiero aprender'),
+/// Seeded phrases — every one of them is a COMPLETE translation: each word is
+/// in the curated vocabulary and every resulting gloss carries a bundled clip
+/// (verified against `assets/content/vocab.json` +
+/// `assets/signs/manifest.json` by `test/quick_phrases_assets_test.dart`, and
+/// on the device).
+///
+/// A phrase is only added here when it resolves with no out-of-vocabulary
+/// notice and no text-mode card in the resulting sequence. That is why
+/// `hola, buenos días` is NOT seeded: `BUENOS-DIAS` has no bundled clip yet,
+/// so the sequence would end on a placeholder instead of a sign.
+///
+/// The phrase list is unaffected by the video-only rule and must stay that
+/// way: [translatorServiceProvider] resolves against a video-only index, so a
+/// clip-less word in a chip would now surface the omission notice instead of
+/// silently ending on a placeholder. Both outcomes are visible, and the chips
+/// exist precisely to avoid the notice.
+const List<QuickPhrase> kQuickPhrases = <QuickPhrase>[
+  QuickPhrase('👋', 'hola'),
+  QuickPhrase('🌇', 'buenas tardes'),
+  QuickPhrase('🙏', 'gracias'),
+  QuickPhrase('🙂', '¿cómo estás?'),
+  QuickPhrase('🤝', 'por favor'),
+  QuickPhrase('😔', 'perdón, por favor'),
 ];
 
 /// Traductor tab: offline-first text → LSC sequence translator.
@@ -122,6 +137,23 @@ class _TranslatorBodyState extends ConsumerState<_TranslatorBody> {
     _translate();
   }
 
+  /// Manual forward step from the on-screen next control.
+  ///
+  /// The tap itself moves the index immediately — it never waits for the
+  /// autoplay tick — and the dwell timer is then restarted so the sign the user
+  /// just picked gets a full beat instead of the remainder of the previous
+  /// autoplay interval. Works while paused too (the timer simply stays off).
+  void _onNext() {
+    ref.read(sequencePlayerProvider.notifier).next();
+    _syncPlaybackTimer(ref.read(sequencePlayerProvider));
+  }
+
+  /// Manual backward step; see [_onNext].
+  void _onPrevious() {
+    ref.read(sequencePlayerProvider.notifier).previous();
+    _syncPlaybackTimer(ref.read(sequencePlayerProvider));
+  }
+
   @override
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
@@ -152,11 +184,12 @@ class _TranslatorBodyState extends ConsumerState<_TranslatorBody> {
           ),
         ),
         const SizedBox(height: 12),
+        const SizedBox(height: 10),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: <Widget>[
-            for (final _QuickPhrase phrase in _kQuickPhrases)
+            for (final QuickPhrase phrase in kQuickPhrases)
               ActionChip(
                 avatar: Text(phrase.emoji, style: const TextStyle(fontSize: 18)),
                 label: Text(phrase.phrase),
@@ -164,7 +197,7 @@ class _TranslatorBodyState extends ConsumerState<_TranslatorBody> {
               ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         KineticButton(
           label: 'Traducir',
           icon: Icons.translate,
@@ -202,18 +235,24 @@ class _TranslatorBodyState extends ConsumerState<_TranslatorBody> {
             ),
           ),
         ],
-        const _PlayerCard(),
+        _PlayerCard(onNext: _onNext, onPrevious: _onPrevious),
       ],
     );
   }
 }
 
 /// `Secuencia n/n` playback card: current sign ([SignView] plays the bundled
-/// clip when the entry has one, and the text-mode card otherwise), progress
-/// dots, play/pause, speed toggle and repeat-audio controls. The card owns the
-/// sign cadence; the clip simply loops until the index advances.
+/// clip, which the video-only index guarantees it has), progress
+/// dots, previous/next controls, play/pause, speed toggle and repeat-audio
+/// controls. The card owns the sign cadence; the clip simply loops until the
+/// index advances.
 class _PlayerCard extends ConsumerWidget {
-  const _PlayerCard();
+  const _PlayerCard({required this.onNext, required this.onPrevious});
+
+  /// Manual step intents, owned by the screen so the autoplay dwell timer can
+  /// be restarted alongside them.
+  final VoidCallback onNext;
+  final VoidCallback onPrevious;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -256,11 +295,22 @@ class _PlayerCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
-          if (entry != null) SignView(entry: entry),
+          // `autoplay: player.playing` is what makes the play/pause icon
+          // truthful: the clip follows the state instead of looping on its own
+          // while the icon claims playback is stopped. Paused holds the current
+          // frame, so the sign stays visible.
+          if (entry != null)
+            SignView(entry: entry, autoplay: player.playing),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              _StepButton(
+                icon: Icons.skip_previous,
+                tooltip: 'Seña anterior',
+                onPressed: player.canGoPrevious ? onPrevious : null,
+              ),
+              const SizedBox(width: 12),
               for (int i = 0; i < player.sequence.length; i++)
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -273,6 +323,12 @@ class _PlayerCard extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(KineticRadii.pill),
                   ),
                 ),
+              const SizedBox(width: 12),
+              _StepButton(
+                icon: Icons.skip_next,
+                tooltip: 'Seña siguiente',
+                onPressed: player.canGoNext ? onNext : null,
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -320,6 +376,58 @@ class _PlayerCard extends ConsumerWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Previous/next control for the gloss sequence.
+///
+/// Built as a tappable surface rather than a bare icon so the affordance is
+/// obvious: a mint circle, the same accent as the play control, sized to the
+/// minimum 48dp touch target. It follows the same `KineticColors` /
+/// `KineticRadii` tokens as the rest of the card.
+class _StepButton extends StatelessWidget {
+  const _StepButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool enabled = onPressed != null;
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        button: true,
+        enabled: enabled,
+        label: tooltip,
+        child: Material(
+          color: enabled
+              ? KineticColors.mint.withValues(alpha: 0.14)
+              : KineticColors.surfaceContainerHigh,
+          shape: const CircleBorder(
+            side: BorderSide(color: KineticColors.mint),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onPressed,
+            child: SizedBox(
+              width: 48,
+              height: 48,
+              child: Icon(
+                icon,
+                size: 28,
+                color: enabled ? KineticColors.mint : KineticColors.textLow,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
