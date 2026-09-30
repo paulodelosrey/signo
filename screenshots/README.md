@@ -6,9 +6,9 @@ Shipaton checklist requires. No device frames are drawn.
 
 | File | Screen | What it proves |
 |------|--------|----------------|
-| `01-aprender-ruta.png` | Learning path | Unit 1 is **Saludos y expresiones** — the video-only gate renumbers surviving units, so the first unit really is the first |
-| `02-diccionario-cobertura.png` | Dictionary | The app states its own coverage: **"201 señas · 59 con video"**, derived from the shipped index rather than hardcoded |
-| `03-detalle-video-en-produccion.png` | Sign detail | A sign with no clip says so honestly and tells the user the remaining videos are in production |
+| `01-aprender-ruta.png` | Learning path | Unit 1 is **Saludos y expresiones** and Unit 2 is **Números, colores y familia** — both units carry finished footage, so the video-only gate has something to keep |
+| `02-diccionario-cobertura.png` | Dictionary | The app states its own coverage: **"201 señas · 152 con video"**, derived from the shipped index rather than hardcoded |
+| `03-detalle-video-en-produccion.png` | Sign detail | `TE-QUIERO` is one of the 49 clip-less signs. It admits it, names the video production in progress, and still gives the sign's spelling and unit |
 | `04-traductor.png` | Translator | "buenas tardes" resolved to a clip-backed sign sequence, with next/previous stepping |
 | `05-premium-revenuecat.png` | Paywall | Both plan buttons side by side and **"Powered by RevenueCat"** — no sandbox notice, so the integration is live, not simulated |
 

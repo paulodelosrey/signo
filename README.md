@@ -1,19 +1,19 @@
 # Signo — Learn Colombian Sign Language (LSC)
 
-Signo is a Flutter app that teaches **Lengua de Señas Colombiana** through a gamified learning path and translates written Spanish into LSC sign sequences — built for the **RevenueCat Shipaton 2026, Next Gen Award**. It pairs a visual dictionary of **201 signs, 59 of them with curated video today**, with an offline-first translator, so hearing relatives, teachers, and students can practice with the Colombian Deaf community — even with no internet and no interpreter around.
+Signo is a Flutter app that teaches **Lengua de Señas Colombiana** through a gamified learning path and translates written Spanish into LSC sign sequences — built for the **RevenueCat Shipaton 2026, Next Gen Award**. It pairs a visual dictionary of **201 signs, 152 of them with curated video today**, with an offline-first translator, so hearing relatives, teachers, and students can practice with the Colombian Deaf community — even with no internet and no interpreter around.
 
 ## Star features
 
 1. **Spanish → LSC translator, offline-first.** A local grammar engine maps any typed sentence to LSC gloss — dropping copulas and connectors, fronting time expressions, reordering verb-final — and plays the matching signs in a sequenced player (`Secuencia n/n`, 0.75×/1× speed, Spanish text-to-speech). It works with zero network. An optional Gemini strategy refines translations when an API key is supplied.
-2. **Gamified LSC course.** A three-unit path (**Saludos y expresiones → Tiempo, lugares y acciones → Abecedario (dactilología)**) with recognize and match exercises, hearts, XP, streaks, gem chests, and a review queue seeded from the signs you miss — structured from a certified LSC interpreter's curriculum.
+2. **Gamified LSC course.** A five-unit path (**Saludos y expresiones → Números, colores y familia → Tiempo, lugares y acciones → Comida y animales → Abecedario (dactilología)**) with recognize and match exercises, hearts, XP, streaks, gem chests, and a review queue seeded from the signs you miss — structured from a certified LSC interpreter's curriculum. 110 of the 201 signs are playable.
 
-   **Every sign you can practice is a sign you can watch.** One predicate — *this sign has a bundled clip* — gates the learning path, the exercises and the translator, so no screen ever offers a sign it cannot play. Two units whose vocabulary had no footage yet leave the path entirely rather than stranding the learner on a dead card, and the surviving units renumber themselves. The dictionary still lists all 201 signs and prints its own coverage instead of hiding the gap.
+   **Every sign you can practice is a sign you can watch.** One predicate — *this sign has a bundled clip* — gates the learning path, the exercises and the translator, so no screen ever offers a sign it cannot play. Today that admits 152 signs and hides 49, and the gap is real rather than hypothetical: the remaining footage has not been produced yet. Those 49 stay in the dictionary, where the sign says so plainly and names the video production in progress. The dictionary prints its own coverage — "201 señas · 152 con video" — instead of hiding the gap, and both numbers are read from the shipped asset rather than written by hand.
 
 ## Feature tour
 
 | Area | What you get |
 |------|--------------|
-| Learn path | Serpentine 3-unit tree, locked nodes, boss reviews, lesson-end rewards screen |
+| Learn path | Serpentine 5-unit tree, locked nodes, boss reviews, lesson-end rewards screen |
 | Practice | "Repasar" queue built from your failed signs — free to enter, and it refills your hearts |
 | Visual dictionary | Diacritics-insensitive search over all 201 compiled signs, with detail cards and a live coverage line |
 | Translator | Offline translation, sequence player, picture quick-phrases, TTS |
