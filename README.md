@@ -63,7 +63,8 @@ Accessibility is a first-class toggle set, not an afterthought: **large text** (
 ## Submission package
 
 - `docs/video-script.md` — demo video script (~90 s, under the 2-minute requirement)
-- `screenshots/` — required device shot list
+- [`screenshots/`](screenshots/) — the five required 1179x2556 device shots, with what each one proves
+- [`icon-1024.png`](icon-1024.png) — 1024x1024 app icon
 - `signo_app/assets/icon/` — icon source art and wiring plan
 - [LICENSE](LICENSE) — MIT
 
