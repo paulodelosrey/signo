@@ -38,3 +38,13 @@ desktop.ini
 .idea/
 .vscode/
 *.swp
+
+# --- Produccion del demo de video: artefactos locales, nunca versionados ---
+# Los scripts de tool/ SI se versionan porque regeneran todo de forma
+# reproducible. Los binarios pesados no: capturas de pantalla, voz y render.
+# build/signo-demo.mp4 se sube a YouTube/Vimeo, no al repo.
+narration-ai/
+video-shots/
+build/
+*.m4a
+*.wav
