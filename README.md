@@ -70,4 +70,4 @@ Accessibility is a first-class toggle set, not an afterthought: **large text** (
 
 ## Built for RevenueCat Shipaton 2026
 
-Signo is built by a solo student developer (UNAD, Colombia) alongside a certified LSC interpreter (curriculum) and a Deaf collaborator (sign videos). Category: **Next Gen Award**.
+Signo is a **solo student project** by a UNAD (Colombia) developer. Its course content comes from a **certified LSC interpreter** and its 198 sign clips were recorded with a **Deaf collaborator** — the only people who can validate Colombian Sign Language content are the people who work in it. Category: **Next Gen Award**.

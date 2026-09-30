@@ -42,7 +42,7 @@ unanswerable.
 | 4 | 0:40–0:52 | **Dictionary**: open it, let the coverage line **"201 señas · 158 con video"** sit on screen for a beat; then search **"gracias"** and open a detail card that plays | "The dictionary holds the whole course, and it states its own coverage instead of hiding the gap — here is what plays today, and this is what does not." |
 | 5 | 0:52–1:14 | **Traductor**: tap the **"buenas tardes"** quick phrase; the sequence player shows **Secuencia 1/1** with the clip playing; tap play/pause, the next-sign arrow, the 0.75× chip and the TTS speaker | "The star feature: type any Spanish sentence and Signo translates it into an LSC sign sequence, completely offline. A grammar engine drops copulas, fronts time expressions and reorders the phrase the way LSC actually works. Each sign plays with progress, speed control and text-to-speech." |
 | 6 | 1:14–1:28 | **Premium**: the paywall with both plan tiles, scroll down to the **"Powered by RevenueCat"** footer | "Premium unlocks infinite hearts and every module — forty-nine ninety-nine a year with a seven-day trial, or nine ninety-nine a month, powered by RevenueCat. Each button buys the plan it names: the hosted paywall is server-configured, so the monthly tap resolves to the monthly package or fails loudly, never quietly billing an annual." |
-| 7 | 1:28–1:38 | End card: repo URL, "MIT licensed", "RevenueCat Shipaton 2026 — Next Gen Award" | "Signo is open source and MIT licensed. Built by a student with a certified interpreter and a Deaf collaborator. Signo — speak with your hands." |
+| 7 | 1:28–1:38 | End card: repo URL, "MIT licensed", "RevenueCat Shipaton 2026 — Next Gen Award" | "Signo is open source and MIT licensed. I built it as a solo student project — the course content comes from a certified interpreter, and the clips were recorded with a Deaf collaborator. Signo — speak with your hands." |
 
 ## Production notes
 
@@ -59,8 +59,12 @@ unanswerable.
   unit and the "five-unit" narration has nothing behind it.
 - **Never show API keys.** They are injected at build time with `--dart-define`
   and live in an ignored `secrets.local.json`.
-- **Credit on the end card**: certified LSC interpreter (curriculum) and Deaf
-  collaborator (sign videos). Keep it.
+- **Credit on the end card**: keep it, and keep the framing. Say *the course
+  content comes from* and *the clips were recorded with* — those are the sources
+  of the material. Avoid "built alongside" or "co-founded": that phrasing reads
+  as a multi-person team, and Next Gen is a student-only category. The app, the
+  compiler and the whole pipeline are one student's work; the interpreter and the
+  Deaf collaborator are what make the content trustworthy.
 - **No copyrighted music.** Royalty-free or none. Third-party trademarks are
   disallowed in the video.
 
