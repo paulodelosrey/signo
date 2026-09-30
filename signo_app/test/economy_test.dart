@@ -43,6 +43,86 @@ void main() {
     });
   });
 
+  group('hearts refill on session completion', () {
+    // The soft-lock this group locks shut: hearts were only ever granted on a
+    // fresh install, so five wrong answers anywhere killed the learning path
+    // permanently. Completing a session has to give them back.
+    test('a full session of wrong answers followed by completion refills',
+        () {
+      EconomyState state = fresh();
+      for (int i = 0; i < kInitialHearts; i++) {
+        state = applyWrongAnswer(state, 's-$i');
+      }
+      expect(state.hearts, 0);
+      expect(canStartLesson(state), isFalse);
+
+      state = applySessionComplete(
+        state,
+        completedNodeId: 'u1-l1',
+        todayKey: '2026-09-25',
+      );
+
+      expect(state.hearts, kInitialHearts);
+      // The gate reopens on its own: no reinstall, no purchase.
+      expect(canStartLesson(state), isTrue);
+      // Refill must not disturb the rest of the completion rules.
+      expect(state.streak, 1);
+      expect(state.xp, kXpPerLesson + 1);
+      expect(state.completedNodeIds, <String>{'u1-l1'});
+    });
+
+    test('the refill tops up a partial loss without granting extra hearts',
+        () {
+      EconomyState state = applyWrongAnswer(fresh(), 's-casa');
+      state = applySessionComplete(state, todayKey: '2026-09-25');
+      expect(state.hearts, kInitialHearts);
+    });
+
+    test('a session completed at full hearts changes nothing', () {
+      final EconomyState state =
+          applySessionComplete(fresh(), todayKey: '2026-09-25');
+      expect(state.hearts, kInitialHearts);
+    });
+
+    test('a repasar completion refills too — it is a completed session', () {
+      EconomyState state = fresh();
+      for (int i = 0; i < kInitialHearts; i++) {
+        state = applyWrongAnswer(state, 's-$i');
+      }
+      state = applySessionComplete(
+        state,
+        todayKey: '2026-09-25',
+        clearsFailedSigns: true,
+      );
+      expect(state.hearts, kInitialHearts);
+      expect(state.failedSignIds, isEmpty);
+    });
+
+    test('an abandoned session does not refill — hearts stay spent', () {
+      // Leaving early never reaches applySessionComplete: the controller drops
+      // the session. This is the documented boundary of the refill, asserted
+      // here so it cannot quietly become "any lesson screen closes".
+      EconomyState state = fresh();
+      for (int i = 0; i < kInitialHearts; i++) {
+        state = applyWrongAnswer(state, 's-$i');
+      }
+      expect(state.hearts, 0);
+      expect(canStartLesson(state), isFalse);
+    });
+
+    test('PRO completion leaves the infinite-hearts state untouched', () {
+      final EconomyState state = applySessionComplete(
+        fresh().copyWith(hasPro: true, hearts: 0),
+        todayKey: '2026-09-25',
+      );
+      expect(state.hasPro, isTrue);
+      // Hearts are meaningless under PRO (the HUD renders ∞ and the gate is
+      // bypassed), so the refill deliberately does not invent a value here.
+      expect(state.hearts, 0);
+      expect(canStartLesson(state), isTrue);
+    });
+  });
+
   group('hearts gate (spec hearts-gate scenario)', () {
     test('zero hearts blocks lesson start', () {
       final EconomyState state = fresh().copyWith(hearts: 0);

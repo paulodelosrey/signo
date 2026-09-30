@@ -8,10 +8,17 @@ import 'package:signo_app/core/settings/settings.dart';
 import 'package:signo_app/features/learn/economy.dart';
 import 'package:signo_app/features/learn/learn_tree_screen.dart';
 import 'package:signo_app/features/learn/lesson_screen.dart';
+import 'package:signo_app/features/learn/lesson_session.dart';
+
+import '../support/settle_with_video_card.dart';
 
 /// U1 fills from L1 subtemas (saludos informales 4 + tonalidades 2 → one
 /// merged lesson + boss). L3/L4 filler gives units 3/4 lockable lesson
 /// nodes. Enough for active/locked/boss states without touching real assets.
+///
+/// Every sign is clip-backed, exactly as `vocabularyProvider` feeds the path
+/// (`VocabIndex.videoEntries`): a clip-less fixture would render an empty tree
+/// now, which is the rule working, not a broken test.
 VocabEntry entry(String id, String gloss, int lesson, String subtema) =>
     VocabEntry(
       id: id,
@@ -19,7 +26,8 @@ VocabEntry entry(String id, String gloss, int lesson, String subtema) =>
       lemmas: <String>[normalizeForMatch(gloss)],
       lesson: lesson,
       subtema: subtema,
-      hasVideo: false,
+      hasVideo: true,
+      asset: 'assets/signs/$id.mp4',
     );
 
 final List<VocabEntry> fixture = <VocabEntry>[
@@ -43,9 +51,36 @@ final List<VocabEntry> fixture = <VocabEntry>[
   entry('f2', 'PERDON', 1, 'Tonalidades'),
 ];
 
+/// Unit 1 is deliberately ONE sign, so its node's distractor pool has to fall
+/// back to the whole video-only vocabulary — the `unitSigns.length >= 4`
+/// branch of `_startNode`. Everything clip-backed sits in the complete index
+/// but outside every unit, so a fallback to the COMPLETE index would hand
+/// `buildExercises` a pool of dead signs. Unit 3 is unlocked by pre-completing
+/// U1's lesson and BOSS, so its first lesson is the active node.
+final List<VocabEntry> tinyUnitFixture = <VocabEntry>[
+  entry('s1', 'HOLA', 1, 'Saludos informales'),
+  // Playable, but in L2 — no unit accepts lesson 2, so these are reachable
+  // ONLY through the fallback pool.
+  for (int i = 0; i < 8; i++)
+    entry('w$i', 'WORDS${i}0', 2, 'Tipos de señas'),
+  entry('a1', 'ACC1', 3, 'Acciones'),
+  entry('a2', 'ACC2', 3, 'Acciones'),
+  // Clip-less filler: a complete-index fallback would pull these in.
+  for (int i = 0; i < 8; i++)
+    VocabEntry(
+      id: 'd$i',
+      gloss: 'DEAD$i',
+      lemmas: <String>['dead$i'],
+      lesson: 4,
+      subtema: 'Comida',
+      hasVideo: false,
+    ),
+];
+
 Future<void> pumpTree(
   WidgetTester tester, {
   Map<String, Object>? prefsOverrides,
+  List<VocabEntry>? vocab,
 }) async {
   GoogleFonts.config.allowRuntimeFetching = false;
   SharedPreferences.setMockInitialValues(<String, Object>{
@@ -60,7 +95,7 @@ Future<void> pumpTree(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         vocabIndexProvider.overrideWith((Ref ref) async =>
-            VocabIndex.build(fixture)),
+            VocabIndex.build(vocab ?? fixture)),
       ],
       child: const MaterialApp(home: Scaffold(body: LearnTreeScreen())),
     ),
@@ -131,6 +166,12 @@ void main() {
 
     expect(find.byType(SnackBar), findsOneWidget);
     expect(find.byType(LessonScreen), findsNothing);
+    // The notice is honest: it never promises that Repasar restores hearts
+    // (it does not) and it names Premium, the only thing that lifts the gate
+    // outright. Hearts themselves now refill on any completed session.
+    expect(find.text(kOutOfHeartsMessage), findsOneWidget);
+    expect(find.textContaining('Repaso'), findsNothing);
+    expect(find.textContaining('Premium'), findsOneWidget);
     // HUD stays exactly as before the blocked attempt.
     expect(find.text('❤️ 0'), findsOneWidget);
   });
@@ -141,14 +182,57 @@ void main() {
     await pumpTree(tester);
 
     await tester.tap(find.byIcon(Icons.play_arrow));
-    await tester.pumpAndSettle();
+    await settleWithVideoCard(tester);
 
     expect(find.byType(LessonScreen), findsOneWidget);
     // First exercise is recognize (index 0): sign card prompt + word options.
     expect(find.text('¿Qué palabra significa esta seña?'),
         findsOneWidget);
-    expect(find.text('video en curaduría'), findsOneWidget);
+    // The prompt card is a video-backed sign, so it is the clip — never the
+    // gloss, which is the answer. Its loading indicator stands in for the clip
+    // in tests (see settleWithVideoCard), and the curation note that used to
+    // sit under it is gone entirely.
+    expect(find.text('HOLA'), findsNothing);
+    expect(find.text('video en curaduría'), findsNothing);
     expect(find.text('1/7'), findsOneWidget); // 7 signs in lesson 1.
+  });
+
+  testWidgets('a small unit falls back to the video-only vocabulary pool', (
+    WidgetTester tester,
+  ) async {
+    await pumpTree(
+      tester,
+      vocab: tinyUnitFixture,
+      prefsOverrides: <String, Object>{
+        kProgressPrefsKey:
+            '{"hearts":5,"xp":0,"gems":0,"streak":0,"lastPlayedOn":null,'
+            '"failedSignIds":[],'
+            '"completedNodeIds":["u1-l1","u1-boss"],"claimedChestUnits":[],'
+            '"hasPro":false}',
+      },
+    );
+
+    // The active node is U3's lesson, a 2-sign node → the wide pool is used.
+    await tester.tap(find.byIcon(Icons.play_arrow).first);
+    await settleWithVideoCard(tester);
+
+    expect(find.byType(LessonScreen), findsOneWidget);
+    expect(find.text('1/2'), findsOneWidget);
+
+    // Read the session the tree actually seeded. Every entry and option must
+    // be playable: the wide pool is the video-only vocabulary, so the clip-less
+    // DEAD* rows that sit in the COMPLETE index are not here.
+    final ProviderContainer container = ProviderScope.containerOf(
+      tester.element(find.byType(LessonScreen)),
+    );
+    final LessonSessionState session = container.read(sessionProvider)!;
+    expect(session.exercises.length, 2);
+    for (final Exercise exercise in session.exercises) {
+      expect(exercise.entry.isVideoBacked, isTrue);
+      for (final VocabEntry option in exercise.options) {
+        expect(option.isVideoBacked, isTrue, reason: option.gloss);
+      }
+    }
   });
 
   testWidgets('repasar card appears with failed signs and starts a session', (
@@ -167,7 +251,7 @@ void main() {
     expect(find.text('2 señas fallidas'), findsOneWidget);
 
     await tester.tap(find.text('Repasar ahora'));
-    await tester.pumpAndSettle();
+    await settleWithVideoCard(tester);
 
     expect(find.byType(LessonScreen), findsOneWidget);
     expect(find.text('1/2'), findsOneWidget);

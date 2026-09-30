@@ -12,6 +12,14 @@ import 'lesson_screen.dart';
 import 'lesson_session.dart';
 import 'repasar.dart';
 
+/// Shown when the hearts gate blocks a lesson start. Named so the test can
+/// assert the exact claim instead of a substring: this string is a promise
+/// about what actually recovers the player, and the previous version named
+/// Repasar, which does not.
+const String kOutOfHeartsMessage =
+    'Te quedaste sin corazones. Se rellenan al terminar una lección; con '
+    'Premium tienes corazones ilimitados.';
+
 /// Aprender tab: the 4-unit serpentine learning path.
 ///
 /// Layout per the mockup: HUD pills (🔥 streak · 💎 gems · ❤️ hearts), the
@@ -46,7 +54,12 @@ class LearnTreeScreen extends ConsumerWidget {
       data: (Curriculum data) => _TreeBody(
         curriculum: data,
         progress: progress,
-        vocabulary: ref.watch(vocabIndexProvider).value?.entries ??
+        // GATE C: the wide fallback pool is the VIDEO-ONLY set, never the
+        // complete 201-sign index. A small node (fewer than 4 unit signs)
+        // borrows this pool, and pulling the complete set here would quietly
+        // re-admit clip-less signs as distractors — the exact surface the
+        // video-only rule removes.
+        videoVocabulary: ref.watch(vocabIndexProvider).value?.videoEntries ??
             const <VocabEntry>[],
       ),
     );
@@ -57,12 +70,14 @@ class _TreeBody extends ConsumerWidget {
   const _TreeBody({
     required this.curriculum,
     required this.progress,
-    required this.vocabulary,
+    required this.videoVocabulary,
   });
 
   final Curriculum curriculum;
   final EconomyState progress;
-  final List<VocabEntry> vocabulary;
+
+  /// Playable signs only; used as the last-resort distractor pool.
+  final List<VocabEntry> videoVocabulary;
 
   void _showSnack(BuildContext context, String message) {
     ScaffoldMessenger.of(context)
@@ -83,17 +98,22 @@ class _TreeBody extends ConsumerWidget {
     required List<VocabEntry> unitSigns,
   }) {
     if (!canStartLesson(progress)) {
-      _showSnack(
-        context,
-        '¡Te quedaste sin corazones! Completa el Repaso para seguir aprendiendo.',
-      );
+      // Honest copy, deliberately. This used to point at Repasar, which does
+      // NOT restore hearts — advice the app could not honour, on the one
+      // screen where the player is already stuck. Hearts now refill on any
+      // completed session, and PRO is the only thing that lifts the gate
+      // outright, so that is what the message offers.
+      _showSnack(context, kOutOfHeartsMessage);
       return;
     }
     ref.read(sessionProvider.notifier).start(
           node.signs,
           nodeId: node.id,
           isBoss: node.isBoss,
-          distractorPool: unitSigns.length >= 4 ? unitSigns : vocabulary,
+          // `unitSigns` comes from the curriculum (already video-only); the
+          // fallback is the whole video-only vocabulary, never the complete
+          // index — see [videoVocabulary].
+          distractorPool: unitSigns.length >= 4 ? unitSigns : videoVocabulary,
         );
     Navigator.of(context).push(_lessonRoute());
   }
@@ -111,15 +131,19 @@ class _TreeBody extends ConsumerWidget {
     final List<PathNode> allNodes = curriculum.allNodes;
     final List<PathNodeState> states =
         assignNodeStates(allNodes, progress.completedNodeIds);
+    // GATE C: the card may only promise a review the session can deliver.
+    // Counting raw `failedSignIds` would offer a tap that starts nothing.
+    final int reviewableFailedCount =
+        ref.watch(reviewableFailedCountProvider).value ?? 0;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
       children: [
         _HudPills(progress: progress),
-        if (progress.failedSignIds.isNotEmpty) ...[
+        if (reviewableFailedCount > 0) ...[
           const SizedBox(height: 12),
           _RepasarCard(
-            failedCount: progress.failedSignIds.length,
+            failedCount: reviewableFailedCount,
             onStart: () => _startRepasar(context, ref),
           ),
         ],
@@ -166,8 +190,12 @@ class _TreeBody extends ConsumerWidget {
         ],
         const SizedBox(height: 8),
         Text(
-          'Contenido: MonikLSC L1–L5 · señas en video del abecedario, '
-              'frases y acciones',
+          // Derived from the curriculum, never hand-written. A hardcoded
+          // "MonikLSC L1–L5" outlived the video-only gate that removed two
+          // units and made the claim false; counting the live nodes means the
+          // footer cannot drift from what the path actually teaches.
+          'Contenido: ${curriculum.units.length} unidades · '
+              '${_playableSignCount(curriculum)} señas, todas con video',
           textAlign: TextAlign.center,
           style: textTheme.labelSmall?.copyWith(
             color: KineticColors.textLow,
@@ -177,6 +205,13 @@ class _TreeBody extends ConsumerWidget {
     );
   }
 }
+
+/// Signs the path can actually drill: lesson nodes only, BOSS excluded so the
+/// count is not inflated by its review copies.
+int _playableSignCount(Curriculum curriculum) => curriculum.units.fold<int>(
+      0,
+      (int sum, CurriculumUnit unit) => sum + unit.allSigns.length,
+    );
 
 /// Top HUD: streak / gems / hearts pills (mockup header).
 class _HudPills extends StatelessWidget {

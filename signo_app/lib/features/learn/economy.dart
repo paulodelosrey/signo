@@ -163,10 +163,24 @@ EconomyState applyWrongAnswer(EconomyState state, String signId) {
   return seeded.copyWith(hearts: state.hearts > 0 ? state.hearts - 1 : 0);
 }
 
-/// Session completed: streak rolls daily (same day keeps the count, next day
-/// increments, any gap resets to 1) and XP = base + streak bonus of the NEW
-/// streak. Optionally marks a path node complete and/or clears the failed
-/// list (Repasar flow).
+/// Session completed: hearts refill to [kInitialHearts], the streak rolls
+/// daily (same day keeps the count, next day increments, any gap resets to 1)
+/// and XP = base + streak bonus of the NEW streak. Optionally marks a path
+/// node complete and/or clears the failed list (Repasar flow).
+///
+/// The refill is what makes the hearts gate recoverable. Hearts are only ever
+/// spent by [applyWrongAnswer] and were previously only granted on a fresh
+/// install, so five wrong answers anywhere soft-locked the learning path
+/// forever — reinstall or buy PRO were the only exits, on a screen the gate
+/// itself refuses to route you to. A completed session is the natural moment:
+/// the player paid attention to the end of it, and one lesson is up to
+/// `kMaxSignsPerLesson` exercises, so a mid-lesson zero would otherwise be
+/// unrecoverable even inside the session itself.
+///
+/// Completing rather than abandoning matters: leaving early keeps the hearts
+/// spent (see `LessonSessionController`, which drops the session on exit and
+/// only calls this on `_finish`). PRO players already carry infinite hearts,
+/// so the refill is a no-op for them.
 EconomyState applySessionComplete(
   EconomyState state, {
   String? completedNodeId,
@@ -185,6 +199,7 @@ EconomyState applySessionComplete(
     streak = 1;
   }
   return state.copyWith(
+    hearts: state.hasPro ? state.hearts : kInitialHearts,
     xp: state.xp + kXpPerLesson + streakBonus(streak),
     streak: streak,
     lastPlayedOn: todayKey,
