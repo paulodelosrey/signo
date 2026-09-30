@@ -1,7 +1,7 @@
 # App icon — source art
 
 `signo_app_logo.png` is the Stitch-generated logo mockup, committed here as the
-icon's **source art reference** (origin: `stitch_gamified_sign_language_app/.../signo_app_logo/screen.png`, 150x135 px).
+icon's **source art reference** (origin: `docs/design-reference/signo_app_logo/screen.png`, 150x135 px).
 
 ## Status
 

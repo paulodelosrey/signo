@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "source": "gramatica-de-lsc (DBLSC corpus) — chapters ch02-estructura-dblsc.md, ch03-apendice-gramatical.md, ch08-discurso-lsc-articulo.md",
+    "source": "docs/lsc-grammar (DBLSC corpus) — chapters ch02-estructura-dblsc.md, ch03-apendice-gramatical.md, ch08-discurso-lsc-articulo.md",
     "note": "Rules are distilled from what the chapters actually state; the two spec-mandated behaviors (drop copula, time-fronting) are standard LSC structure the chapters assume (ch08 example 'Ayer María le dijo…' opens with the time sign; ch02 forbids word-by-word translation). Lookup precedence in the gloss mapper is: vocabulary match first, then rules — so lexical signs such as SI (afirmación) or PARA-QUE (pregunta) are never dropped even when their lemmas appear in a drop category.",
     "rules": {
       "drop-copula": "Spanish copula has no lexical sign in LSC; ch02 anti-pattern: 'Tratar la glosa como traducción literal palabra por palabra del español a la LSC'.",
