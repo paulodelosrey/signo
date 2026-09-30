@@ -1,11 +1,11 @@
 {
-    "name": "signo_app",
-    "short_name": "signo_app",
+    "name": "Signo",
+    "short_name": "Signo",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#10131A",
+    "theme_color": "#00F0A8",
+    "description": "Learn Colombian Sign Language (LSC) with a guided path and a text-to-sign-video translator.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
