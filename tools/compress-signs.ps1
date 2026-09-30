@@ -13,19 +13,22 @@
   - -movflags +faststart so playback can begin before the file is fully read.
   - Every clip is capped at 960px wide: the phone screen is 1080px, so a
     1080p source gains nothing once the UI chrome is accounted for.
+  - Every folder is taken, not a chosen few. The budget is a SAFETY valve for
+    an unexpectedly large export, not a content decision: leaving folders out
+    silently starved units that had finished recordings sitting in the Drive.
 
 .PARAMETER Priority
   Folder names in descending priority order. A folder is taken whole until the
   clip budget is exhausted.
 
 .EXAMPLE
-  powershell -ExecutionPolicy Bypass -File tools/compress-signs.ps1 -MaxClips 63
+  powershell -ExecutionPolicy Bypass -File tools/compress-signs.ps1 -MaxClips 200
 #>
 [CmdletBinding()]
 param(
   [string]$SourceDir = (Join-Path (Split-Path $PSScriptRoot -Parent) 'LSC-project'),
   [string]$OutDir    = (Join-Path (Split-Path $PSScriptRoot -Parent) 'signo_app\assets\signs'),
-  [int]   $MaxClips  = 63,
+  [int]   $MaxClips  = 200,
   [int]   $Crf       = 28
 )
 
@@ -38,18 +41,6 @@ if (-not $ffmpeg) {
 }
 if (-not $ffmpeg) { throw 'ffmpeg not found. Install it before running this pipeline.' }
 
-# Abecedario first: dactilology is the most visually legible content and the
-# clips are already small. Then the phrases a judge is most likely to type.
-$Priority = @('ABECEDARIO', 'FRASES COMUNES', 'ACCIONES')
-
-# Files that are byte-level duplicates left behind by the Drive export or by
-# Windows copy-conflict renaming. Verified against the vocabulary index.
-$DuplicateOf = @{
-  'ANTONIMOS|bueno(1)' = 'bueno'
-  'ANTONIMOS|nuevo(1)' = 'nuevo'
-  'LUGAR|aquí'         = 'aqui'
-}
-
 function ConvertTo-Slug([string]$name) {
   $d = $name.Normalize([System.Text.NormalizationForm]::FormD)
   $sb = New-Object System.Text.StringBuilder
@@ -61,6 +52,45 @@ function ConvertTo-Slug([string]$name) {
   $ascii = $sb.ToString().ToLowerInvariant()
   $ascii = $ascii -replace '[^a-z0-9]+', '_'
   return $ascii.Trim('_')
+}
+
+# Preferred order, written WITHOUT diacritics and resolved against the real
+# directory names below. PowerShell 5.1 reads a BOM-less .ps1 as ANSI, so an
+# accented literal here becomes mojibake that never matches the folder on disk,
+# and the folder is silently skipped. Writing them plain and resolving
+# accent-insensitively makes the script immune to its own file encoding.
+$PreferredOrder = @(
+  'abecedario', 'frases_comunes', 'acciones', 'comida', 'calendario',
+  'antonimos', 'lugar', 'tiempo', 'familia', 'negacion_afirmacion',
+  'sujeto', 'calificativos', 'animales', 'colores', 'miscellaneous'
+)
+
+$allDirs = @(Get-ChildItem $SourceDir -Directory)
+$Priority = New-Object System.Collections.Generic.List[string]
+foreach ($want in $PreferredOrder) {
+  foreach ($d in $allDirs) {
+    if ((ConvertTo-Slug $d.Name) -eq $want -and -not $Priority.Contains($d.Name)) {
+      $Priority.Add($d.Name)
+    }
+  }
+}
+# Any folder not in the preferred list still gets processed: silently skipping
+# one is exactly the bug this ordering exists to prevent.
+foreach ($d in $allDirs) { if (-not $Priority.Contains($d.Name)) { $Priority.Add($d.Name) } }
+
+Write-Host ("Folders to process ({0}): {1}" -f $Priority.Count, ($Priority -join ', '))
+
+# Files that are byte-level duplicates left behind by the Drive export or by
+# Windows copy-conflict renaming. Verified against the vocabulary index.
+#
+# Both sides are compared through ConvertTo-Slug, so the keys below must be
+# written the way a slug looks, not the way the file name reads. The previous
+# literal 'LUGAR|aquí' could never match, because the lookup side had already
+# been folded to 'lugar|aqui' - and since 'aquí' only exists in LUGAR, honouring
+# that entry would have DROPPED the sign instead of de-duplicating it.
+$DuplicateOf = @{
+  'antonimos|bueno_1' = 'bueno'
+  'antonimos|nuevo_1' = 'nuevo'
 }
 
 # The ABECEDARIO export contains one file whose name lost its encoding on the
@@ -79,19 +109,28 @@ foreach ($folder in $Priority) {
   foreach ($f in Get-ChildItem $dir -File -Filter *.mp4 | Sort-Object Name) {
     if ($selected.Count -ge $MaxClips) { break }
     $key = "$folder|$($f.BaseName)"
-    if ($DuplicateOf.ContainsKey($key)) {
-      Write-Host "  dup   $key  -> $($DuplicateOf[$key])"
+    $keyLookup = (ConvertTo-Slug $folder) + '|' + (ConvertTo-Slug $f.BaseName)
+    if ($DuplicateOf.ContainsKey($keyLookup)) {
+      Write-Host "  dup   $key  -> $($DuplicateOf[$keyLookup])"
       continue
     }
     $slug = ConvertTo-Slug $f.BaseName
 
-    # U+00D1 / U+00F1 fold to plain 'n' once diacritics are stripped, which
-    # would collide with the letter N. Detect the tilde by CODEPOINT, never by
-    # the folded slug, otherwise the letter N itself gets renamed.
+    # The ABECEDARIO export contains one file whose name lost its encoding on
+    # the way out of Drive: it is the letter Ñ, and once diacritics are stripped
+    # its slug would collide with the letter N.
+    #
+    # The test must be "the WHOLE name is that one letter", NOT "the name
+    # contains U+00D1/U+00F1 anywhere". The loose version also matched any word
+    # with an enye - so `año`, `cumpleaños`, `baño` and `mañana` were all
+    # written out as n_tilde_2..n_tilde_5, four real signs saved under a name
+    # no course row could ever match.
     $isTilde = $false
-    foreach ($ch in $f.BaseName.ToCharArray()) {
-      $c = [int]$ch
-      if ($c -eq 0x00D1 -or $c -eq 0x00F1) { $isTilde = $true }
+    if ($f.BaseName.Length -eq 1) {
+      foreach ($ch in $f.BaseName.ToCharArray()) {
+        $c = [int]$ch
+        if ($c -eq 0x00D1 -or $c -eq 0x00F1) { $isTilde = $true }
+      }
     }
     if ($isTilde) { $slug = 'n_tilde' }
 
@@ -135,7 +174,15 @@ foreach ($c in $selected) {
   Write-Host ("  [{0,2}/{1}] {2,-24} {3,8:N0} KB  (era {4,7:N0} KB)" -f $i, $selected.Count, $c.Slug, ($sz/1KB), ($src/1KB))
 }
 
-$manifest | ConvertTo-Json -Depth 3 | Set-Content (Join-Path $OutDir 'manifest.json') -Encoding UTF8
+# No BOM. PowerShell 5.1's `Set-Content -Encoding UTF8` prepends one, and Dart
+# happens to tolerate it today, but a strict JSON reader downstream would choke
+# on a file that is supposed to be plain UTF-8.
+$manifestJson = $manifest | ConvertTo-Json -Depth 3
+[System.IO.File]::WriteAllText(
+  (Join-Path $OutDir 'manifest.json'),
+  $manifestJson,
+  (New-Object System.Text.UTF8Encoding($false))
+)
 
 Write-Host ""
 Write-Host ("TOTAL: {0:N0} MB  ->  {1:N0} MB   ({2:P0} reduction)" -f ($totalIn/1MB), ($totalOut/1MB), (1 - $totalOut/$totalIn))

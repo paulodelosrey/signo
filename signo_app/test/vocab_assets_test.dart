@@ -37,10 +37,14 @@ void main() {
 
       final List<VocabEntry> withVideo =
           index.entries.where((VocabEntry e) => e.hasVideo).toList();
-      // 27 alphabet clips + 15 acciones + 7 frases + 10 question forms of
-      // existing signs. 4 manifest clips (que_pregunta, se_va, bienvenido,
-      // esperar) have no vocabulary entry yet and stay unused on purpose.
-      expect(withVideo.length, 59);
+      // Every bundled clip that a course row can name is now bound: the
+      // pipeline takes all fifteen folders instead of three, so the alphabet,
+      // actions, phrases and the Comida/Calendario/Familia/Antonimos sets all
+      // reach a sign. A handful of clips still have no course row to match
+      // (notably the "Images ..." curriculum rows, which name pictures rather
+      // than signs, and the bare month names under the single
+      // "Meses del ano (Enero-Diciembre)" row); those stay unused on purpose.
+      expect(withVideo.length, 152);
       expect(
         withVideo.every((VocabEntry e) =>
             e.asset != null && e.asset!.startsWith('assets/signs/')),
@@ -104,10 +108,14 @@ void main() {
 
   group('the shipped learning path over the REAL assets', () {
     // The product decision, measured against the data the app actually ships:
-    // only the 59 clip-backed signs may teach, and of those only the ones
-    // inside a unit config reach the path. U2 (números/colores/familia) and
-    // U4 (comida/animales) have no clips at all and vanish; what is left is
-    // 46 signs across 3 units, renumbered 1..3.
+    // only the 152 clip-backed signs may teach, and of those only the ones
+    // inside a unit config reach the path. All five units now carry clips, so
+    // none of them is filtered away: 110 signs across 5 units, renumbered 1..5.
+    //
+    // The gate itself is unchanged by that growth. It was built when only three
+    // units had footage and the other two dropped off the path; the same
+    // predicate now admits far more signs while still refusing any sign without
+    // a bundled clip.
     late VocabIndex index;
 
     setUpAll(() async {
@@ -116,17 +124,16 @@ void main() {
       );
     });
 
-    test('only the 59 clip-backed signs are playable', () {
+    test('only the 152 clip-backed signs are playable', () {
       expect(index.count, 201);
-      expect(index.videoEntries.length, 59);
+      expect(index.videoEntries.length, 152);
       expect(
         index.videoEntries.every((VocabEntry e) => e.isVideoBacked),
         isTrue,
       );
     });
 
-    test('the path is 46 signs across 3 video-only units, renumbered 1..3',
-        () {
+    test('the path is 110 signs across all 5 clip-backed units', () {
       final Curriculum curriculum = buildCurriculum(index.videoEntries);
 
       expect(
@@ -135,40 +142,43 @@ void main() {
             .toList(),
         <String>[
           '1: Saludos y expresiones',
-          '2: Tiempo, lugares y acciones',
-          '3: Abecedario (dactilología)',
+          '2: Números, colores y familia',
+          '3: Tiempo, lugares y acciones',
+          '4: Comida y animales',
+          '5: Abecedario (dactilología)',
         ],
       );
       expect(
         curriculum.units
             .expand((CurriculumUnit u) => u.allSigns)
             .length,
-        46,
+        110,
       );
-      // U2 and U4 are not merely empty — they are not on the path at all, so
-      // no header card and no BOSS for a unit the learner cannot complete.
+      // Numbering must be sequential with no gaps left by a filtered unit.
       expect(
-        curriculum.units
-            .map((CurriculumUnit u) => u.title)
-            .toList(),
-        isNot(contains('Números, colores y familia')),
+        curriculum.units.map((CurriculumUnit u) => u.number).toList(),
+        <int>[1, 2, 3, 4, 5],
       );
-      expect(
-        curriculum.units
-            .map((CurriculumUnit u) => u.title)
-            .toList(),
-        isNot(contains('Comida y animales')),
-      );
+      // The invariant that matters is not WHICH units survive but that nothing
+      // on the path can be dead. A unit with no footage is dropped, never
+      // shipped empty; a sign with no clip never becomes playable content.
       for (final CurriculumUnit unit in curriculum.units) {
+        expect(unit.allSigns, isNotEmpty, reason: '${unit.title} is empty');
         for (final PathNode node in unit.nodes) {
           for (final VocabEntry sign in node.signs) {
             expect(sign.isVideoBacked, isTrue, reason: '${sign.gloss} is dead');
           }
         }
       }
+      // And the gate must not be leaking in the clip-less remainder.
+      expect(
+        index.videoEntries.length,
+        lessThan(index.count),
+        reason: 'a video-only index identical to the full one proves no gate',
+      );
     });
 
-    test('curriculumProvider builds that same 3-unit path (GATE A)', () async {
+    test('curriculumProvider builds that same 5-unit path (GATE A)', () async {
       // Goes through the real provider against the real asset, so a revert of
       // the provider back to `index.entries` fails HERE and not only in a
       // hypothetical. This is the gate, asserted at the gate.
@@ -177,22 +187,24 @@ void main() {
       final Curriculum viaProvider =
           await container.read(curriculumProvider.future);
 
-      // `allSigns` (lessons only, no BOSS duplicates) is what "46 signs" means.
+      // `allSigns` (lessons only, no BOSS duplicates) is what "110 signs" means.
       expect(
         viaProvider.units
             .map((CurriculumUnit u) => '${u.number}: ${u.title}')
             .toList(),
         <String>[
           '1: Saludos y expresiones',
-          '2: Tiempo, lugares y acciones',
-          '3: Abecedario (dactilología)',
+          '2: Números, colores y familia',
+          '3: Tiempo, lugares y acciones',
+          '4: Comida y animales',
+          '5: Abecedario (dactilología)',
         ],
       );
       expect(
         viaProvider.units
             .expand((CurriculumUnit u) => u.allSigns)
             .length,
-        46,
+        110,
       );
     });
   });
@@ -209,10 +221,10 @@ void main() {
       );
     });
 
-    test('browse-all states 201 signs and 59 with video', () {
+    test('browse-all states 201 signs and 152 with video', () {
       expect(
         dictionaryCoverageLine(index, index.entries, ''),
-        '201 señas · 59 con video',
+        '201 señas · 152 con video',
       );
     });
 
@@ -224,25 +236,25 @@ void main() {
       expect(
         dictionaryCoverageLine(index, results, 'casa'),
         '${results.length} ${results.length == 1 ? 'resultado' : 'resultados'} '
-        'de 201 señas · 59 con video',
+        'de 201 señas · 152 con video',
       );
       // The coverage half is unchanged by the query — the point of the line.
       expect(
         dictionaryCoverageLine(index, results, 'casa'),
-        contains('59 con video'),
+        contains('152 con video'),
       );
     });
 
     test('an empty search result still reports the coverage', () {
       expect(
         dictionaryCoverageLine(index, const <VocabEntry>[], 'zzz'),
-        '0 resultados de 201 señas · 59 con video',
+        '0 resultados de 201 señas · 152 con video',
       );
     });
 
     test('the count never exceeds the number of clip-backed signs', () {
       expect(index.videoEntries.length, lessThan(index.count));
-      expect(index.videoEntries.length, 59);
+      expect(index.videoEntries.length, 152);
     });
   });
 
