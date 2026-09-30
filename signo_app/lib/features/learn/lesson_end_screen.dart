@@ -9,18 +9,37 @@ import 'lesson_session.dart';
 /// Lesson-end screen (spec `complete-lesson`): XP earned, precision %,
 /// streak update, chest notice when a unit completes, and the Kinetic
 /// "Continuar" action back to the learning path.
-class LessonEndScreen extends ConsumerWidget {
+class LessonEndScreen extends ConsumerStatefulWidget {
   const LessonEndScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LessonEndScreen> createState() => _LessonEndScreenState();
+}
+
+class _LessonEndScreenState extends ConsumerState<LessonEndScreen> {
+  /// "Continuar" dismisses the session and pops. The dismissal makes
+  /// [sessionProvider] null, which sends this very screen down its own
+  /// "no result" branch — so without this guard the route pops twice and the
+  /// shell underneath is torn down too, leaving a black screen.
+  bool _popped = false;
+
+  void _popOnce() {
+    if (_popped) {
+      return;
+    }
+    _popped = true;
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final LessonSessionState? session = ref.watch(sessionProvider);
     final LessonResult? result = session?.result;
     if (result == null) {
       // No result (deep-link/restore edge) — nothing to show, go back.
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) {
-          Navigator.of(context).pop();
+        if (mounted) {
+          _popOnce();
         }
       });
       return const Scaffold(body: SizedBox.expand());
@@ -104,7 +123,7 @@ class LessonEndScreen extends ConsumerWidget {
                 expand: true,
                 onPressed: () {
                   ref.read(sessionProvider.notifier).dismiss();
-                  Navigator.of(context).pop();
+                  _popOnce();
                 },
               ),
             ],

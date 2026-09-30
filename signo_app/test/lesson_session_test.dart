@@ -5,10 +5,27 @@ import 'package:signo_app/core/lsc_vocab/lsc_vocab.dart';
 import 'package:signo_app/core/settings/settings.dart'
     show sharedPreferencesProvider;
 import 'package:signo_app/features/learn/economy.dart'
-    show kInitialHearts, kXpPerLesson, progressProvider;
+    show canStartLesson, kInitialHearts, kXpPerLesson, progressProvider;
 import 'package:signo_app/features/learn/lesson_session.dart';
 
+/// A PLAYABLE sign: the flag and the clip path together, which is what
+/// [VocabEntry.isVideoBacked] demands. Every sign in these fixtures is meant
+/// to be playable, so the helper carries the flags once instead of every call
+/// site remembering them (and forgetting, which is the regression the rule
+/// exists to prevent).
 VocabEntry entry(String id, String gloss) => VocabEntry(
+      id: id,
+      gloss: gloss,
+      lemmas: <String>[normalizeForMatch(gloss)],
+      lesson: 1,
+      subtema: 'Saludos informales',
+      hasVideo: true,
+      asset: 'assets/signs/$id.mp4',
+    );
+
+/// A sign the app cannot play. Only for the tests whose whole point is the
+/// video-only gate.
+VocabEntry clipLessEntry(String id, String gloss) => VocabEntry(
       id: id,
       gloss: gloss,
       lemmas: <String>[normalizeForMatch(gloss)],
@@ -16,6 +33,7 @@ VocabEntry entry(String id, String gloss) => VocabEntry(
       subtema: 'Saludos informales',
       hasVideo: false,
     );
+
 
 final List<VocabEntry> fourSigns = <VocabEntry>[
   entry('s1', 'HOLA'),
@@ -118,7 +136,99 @@ void main() {
     });
   });
 
+  group('video-only invariant', () {
+    // The curriculum already feeds video-only signs, so these tests hand
+    // buildExercises the WORST legal input — a mixed sign list and a full
+    // mixed pool — to prove the gate holds on its own instead of relying on
+    // every caller having remembered to filter first.
+    final List<VocabEntry> mixedSigns = <VocabEntry>[
+      entry('s1', 'HOLA'),
+      clipLessEntry('x1', 'GHOST1'),
+      entry('s2', 'CHAU'),
+      clipLessEntry('x2', 'GHOST2'),
+      entry('s3', 'GRACIAS'),
+    ];
+    final List<VocabEntry> mixedPool = <VocabEntry>[
+      ...mixedSigns,
+      entry('p1', 'POR-FAVOR'),
+      clipLessEntry('x3', 'GHOST3'),
+      entry('p2', 'PERDON'),
+      clipLessEntry('x4', 'GHOST4'),
+      entry('p3', 'BUENO'),
+      entry('p4', 'MALO'),
+    ];
+
+    test('no exercise entry is ever a clip-less sign', () {
+      final List<Exercise> exercises =
+          buildExercises(mixedSigns, distractorPool: mixedPool);
+
+      expect(exercises.length, 3, reason: 'the two GHOST signs are dropped');
+      expect(
+        exercises.map((Exercise e) => e.entry.id).toList(),
+        <String>['s1', 's2', 's3'],
+      );
+      for (final Exercise exercise in exercises) {
+        expect(exercise.entry.isVideoBacked, isTrue);
+      }
+    });
+
+    test('no option is ever a clip-less sign, even from a full mixed pool', () {
+      for (final Exercise exercise
+          in buildExercises(mixedSigns, distractorPool: mixedPool)) {
+        for (final VocabEntry option in exercise.options) {
+          expect(
+            option.isVideoBacked,
+            isTrue,
+            reason: '${option.gloss} is a dead option card',
+          );
+        }
+        // The correct option still sits among the distractors.
+        expect(
+          exercise.options.any((VocabEntry o) => o.id == exercise.entry.id),
+          isTrue,
+        );
+      }
+    });
+
+    test('an all-clip-less sign list yields no exercises and no crash', () {
+      // The edge the modulo arithmetic used to divide by zero on: a pool of
+      // zero playable entries alongside a playable sign, and a sign list with
+      // nothing playable at all.
+      expect(
+        buildExercises(
+          <VocabEntry>[clipLessEntry('x1', 'GHOST1')],
+          distractorPool: <VocabEntry>[
+            clipLessEntry('x2', 'GHOST2'),
+            clipLessEntry('x3', 'GHOST3'),
+          ],
+        ),
+        isEmpty,
+      );
+      expect(
+        buildExercises(<VocabEntry>[], distractorPool: mixedPool),
+        isEmpty,
+      );
+    });
+
+    test('a playable sign with an all-clip-less pool still gets its exercise',
+        () {
+      // The pool is empty AFTER filtering, which is the `% pool.length`
+      // divide-by-zero the guard exists for. The exercise survives with a
+      // single option — the correct sign.
+      final List<Exercise> exercises = buildExercises(
+        <VocabEntry>[entry('s1', 'HOLA')],
+        distractorPool: <VocabEntry>[clipLessEntry('x1', 'GHOST1')],
+      );
+
+      expect(exercises.length, 1);
+      expect(exercises.single.options.map((VocabEntry o) => o.id).toList(),
+          <String>['s1']);
+      expect(exercises.single.correctIndex, 0);
+    });
+  });
+
   group('LessonSessionController', () {
+
     test('start opens the session on exercise 0 with a clean tally',
         () async {
       final ProviderContainer container = await makeContainer();
@@ -205,7 +315,8 @@ void main() {
           container.read(sessionProvider.notifier);
       controller.start(fourSigns, nodeId: 'u1-l1', distractorPool: widePool);
 
-      // Answer 3 correct, 1 wrong → 75% precision, hearts 4.
+// Answer 3 correct, 1 wrong → 75% precision. The wrong answer spends a heart
+      // mid-session, and completing the session refills it (see below).
       for (int i = 0; i < 4; i++) {
         final LessonSessionState session = container.read(sessionProvider)!;
         final Exercise exercise = session.exercises[session.index];
@@ -229,7 +340,15 @@ void main() {
         container.read(progressProvider).completedNodeIds,
         <String>{'u1-l1'},
       );
-      expect(container.read(progressProvider).hearts, kInitialHearts - 1);
+expect(
+        container.read(progressProvider).hearts,
+        // Completing the session gives the heart back. This used to assert
+        // `kInitialHearts - 1`, locking in the soft-lock: the wrong answer was
+        // paid for and never recovered, so the path stayed shut after a lesson
+        // the player had just finished.
+        kInitialHearts,
+      );
+      expect(canStartLesson(container.read(progressProvider)), isTrue);
     });
 
     test('boss session reports unitCompleted', () async {

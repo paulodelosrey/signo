@@ -18,6 +18,7 @@ class SignVideoPlayer extends StatefulWidget {
     super.key,
     required this.assetPath,
     required this.fallback,
+    this.loading,
     this.autoplay = false,
   });
 
@@ -26,6 +27,14 @@ class SignVideoPlayer extends StatefulWidget {
 
   /// Rendered while the clip loads and whenever it cannot be decoded.
   final Widget fallback;
+
+  /// Rendered while [VideoPlayerController.initialize] is still in flight.
+  ///
+  /// It must NOT claim the sign has no clip: initialization takes about a
+  /// second on a real device, and showing [fallback] meanwhile made every
+  /// freshly-loaded sign flash a "video en curaduría" card before its clip
+  /// appeared. Defaults to [fallback] when the caller has nothing better.
+  final Widget? loading;
 
   /// Start playing as soon as the clip is ready. Off for compact option
   /// cards so a grid of answers never plays N clips at once.
@@ -131,6 +140,11 @@ class _SignVideoPlayerState extends State<SignVideoPlayer> {
   Widget build(BuildContext context) {
     final VideoPlayerController? controller = _controller;
     if (_failed || controller == null || !controller.value.isInitialized) {
+      // Distinguish "not ready yet" from "this sign has no clip": the second
+      // one may say so, the first one must not.
+      if (_controller == null && !_failed) {
+        return widget.loading ?? widget.fallback;
+      }
       return widget.fallback;
     }
     final VideoPlayerValue value = controller.value;

@@ -104,18 +104,48 @@ class LessonSessionState {
 /// deterministically (or fixed when [fixedType] is set). Distractors are
 /// drawn cyclically from [distractorPool] — never random — so sessions are
 /// reproducible and test-friendly.
+///
+/// GATE B of the video-only rule, and the HARD invariant of this function:
+/// both [signs] and [distractorPool] are filtered down to
+/// [VocabEntry.isVideoBacked] before anything is built, so every
+/// [Exercise.entry] and every element of [Exercise.options] is a sign the
+/// player can actually play.
+///
+/// This is deliberate defense-in-depth, not redundancy. The curriculum
+/// already ships video-only signs ([buildCurriculum] is fed
+/// `VocabIndex.videoEntries`), but exercises are also started by Repasar,
+/// Práctica and the BOSS wrappers, and those reach into the COMPLETE index to
+/// resolve persisted ids. Filtering at the only place that turns signs into
+/// exercises means no future caller can regress the rule by forgetting to
+/// filter its own input — it would have to reach past this function to do it.
 List<Exercise> buildExercises(
   List<VocabEntry> signs, {
   required List<VocabEntry> distractorPool,
   ExerciseType? fixedType,
 }) {
+  // Defense-in-depth: the curriculum already guarantees video-only, but a
+  // future caller must not be able to regress this silently.
+  final List<VocabEntry> playable = <VocabEntry>[
+    for (final VocabEntry entry in signs)
+      if (entry.isVideoBacked) entry,
+  ];
+  final List<VocabEntry> pool = <VocabEntry>[
+    for (final VocabEntry entry in distractorPool)
+      if (entry.isVideoBacked) entry,
+  ];
+  // Nothing playable left: an empty session, not a crash. A caller that finds
+  // itself here has a content problem, and a blank lesson is a far better
+  // report than a RangeError on the first option.
+  if (playable.isEmpty) {
+    return const <Exercise>[];
+  }
   final List<Exercise> exercises = <Exercise>[];
-  for (int i = 0; i < signs.length; i++) {
-    final VocabEntry entry = signs[i];
+  for (int i = 0; i < playable.length; i++) {
+    final VocabEntry entry = playable[i];
     final ExerciseType type =
         fixedType ?? (i.isEven ? ExerciseType.recognize : ExerciseType.match);
     final List<VocabEntry> options =
-        _buildOptions(entry, distractorPool, i);
+        _buildOptions(entry, pool, i);
     exercises.add(Exercise(
       entry: entry,
       type: type,
@@ -136,6 +166,12 @@ List<VocabEntry> _buildOptions(
   int seedIndex,
 ) {
   final List<VocabEntry> options = <VocabEntry>[correct];
+  // [pool] can now legitimately be empty (every distractor was clip-less even
+  // though `correct` survived), so the rotation start is guarded instead of
+  // dividing by `pool.length` — a zero length threw in the modulo below.
+  if (pool.isEmpty) {
+    return options;
+  }
   final Set<String> usedIds = <String>{correct.id};
   int cursor = (seedIndex * 3 + 1) % pool.length;
   while (options.length < 4 && usedIds.length < pool.length) {
@@ -173,6 +209,14 @@ class LessonSessionController extends Notifier<LessonSessionState?> {
 
   /// Starts a session over [signs]. [distractorPool] defaults to [signs];
   /// callers pass a wider pool (unit/vocabulary) for small sign sets.
+  ///
+  /// [buildExercises] drops clip-less signs, so a caller handing in nothing
+  /// playable gets an empty session rather than exercises. That is not
+  /// reachable from the shipped callers (the tree passes curriculum nodes,
+  /// Repasar returns early on an empty filtered set, Práctica is disabled
+  /// without a pool) and is left as an inert state rather than a second
+  /// layer of gating here — [LessonSessionState.current] is null on an empty
+  /// session, so nothing is ever asked or scored.
   void start(
     List<VocabEntry> signs, {
     String? nodeId,
