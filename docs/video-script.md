@@ -19,15 +19,93 @@ like costs you twenty seconds to redo, not the whole take.
   you are running long you are going too fast, which is worse than sounding slow
 - Slips are fine. Pause, breathe, restart the sentence from its beginning
 
-## Pronunciation
+## Pronunciation — Spanish phonetics
+
+Written with **sounds that exist in Spanish**, because the two things that trip a
+non-native reader are the English silent `e` (`phon`, `giv`) and the schwa, which
+Spanish does not have at all (so every schwa becomes `e` or `o`).
+
+**Do not read the phonetic column aloud.** It is a guide for how your mouth
+should move; read the clean English line above it.
+
+| English | Say |
+|---|---|
+| phone | **fon** |
+| talk | **tock** |
+| with | **uiz** |
+| could | **cud** |
+| your | **yor** |
+| their | **deir** |
+| what | **uat** |
+| Deaf | **dif** |
+| language | **lengueich** |
+| across | **a crós** |
+| hearing | **jíring** |
+| families | **fámilis** |
+| practice | **präctis** |
+| courses | **córser** |
+| scarce | **éser** |
+| interpreters | **intérpréters** |
+| busy | **bísi** |
+| material | **matiríal** |
+| teaches | **tíichers** |
+| five | **faiv** |
+| units | **yúnits** |
+| every | **éveri** |
+| rule | **rúul** |
+| reaches | **ríichers** |
+| path | **páaz** |
+| video | **vydio** |
+| never | **néver** |
+| taught | **tóot** |
+| holds | **jóuls** |
+| whole | **jóul** |
+| states | **steits** |
+| coverage | **kóberch** |
+| instead | **instéd** |
+| hiding | **jáiding** |
+| Here | **jír** |
+| plays | **pleis** |
+| today | **tudéi** |
+| sentence | **séntens** |
+| Spanish | **spánish** |
+| turns | **térns** |
+| completely | **complítli** |
+| offline | **ofláin** |
+| grammar | **grámar** |
+| engine | **énchin** |
+| expressions | **expréschons** |
+| reorders | **reórder** |
+| phrase | **freis** |
+| actually | **áktchuali** |
+| speed | **spíid** |
+| control | **contról** |
+| Premium | **prímiam** |
+| unlocks | **anlóks** |
+| infinite | **infínit** |
+| hearts | **jarts** |
+| forty-nine | **forti náin** |
+| ninety-nine | **náinti náin** |
+| powered | **páuerd** |
+| RevenueCat | **réveniu-cat** |
+| button | **bótón** |
+| buys | **bais** |
+| source | **sórse** |
+| licensed | **láisensd** |
+| Built | **bilt** |
+| student | **studént** |
+| certified | **sertifáid** |
+| collaborator | **kolabóreitor** |
+
+**Special cases**
 
 | Written | Say |
 |---|---|
-| LSC | "el-ese-ce" — do not spell out one letter at a time |
-| Colombian Sign Language | "co-lom-BEE-an" (stress on **BI**) |
-| MIT licensed | "M-I-T licensed" |
-| RevenueCat | "REV-en-you-cat" |
-| 49.99 / 9.99 | "forty-nine ninety-nine" / "nine ninety-nine" — never say the dot |
+| LSC | **el és ce** — never one letter at a time |
+| Colombian | **colómbien** (stress on the middle syllable) |
+| M-I-T | **eme-ai-te**, spelled out |
+| 49.99 | **forty-nine ninety-nine** — never say the dot |
+| 9.99 | **nine ninety-nine** |
 
 ## Scenes
 
