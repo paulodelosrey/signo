@@ -41,7 +41,9 @@ class CurriculumUnit {
     required this.nodes,
   });
 
-  /// 1-based unit number (UNIDAD 1..5).
+  /// 1-based unit number, sequential over the units that SURVIVED the
+  /// video-only filter (so `UNIDAD 1..N`, never a gap). Load-bearing: node
+  /// ids and the chest key derive from it. See [buildCurriculum].
   final int number;
   final String title;
   final List<PathNode> nodes;
@@ -171,7 +173,26 @@ const List<String> _roman = <String>[
   'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
 ];
 
-/// Builds the 5-unit path from the compiled vocabulary.
+/// Builds the units of the path from the compiled vocabulary.
+///
+/// VIDEO-ONLY CONTRACT: the learning path is a TEACHING surface, so a sign
+/// without a bundled clip must never reach it — the student would be asked to
+/// recognize a card that can only show a word, which is the exercise giving
+/// away its own answer. Callers therefore pass `VocabIndex.videoEntries`
+/// (see [curriculumProvider]); a unit whose signs all get filtered away is
+/// DROPPED entirely, header card, nodes and BOSS included, because a unit
+/// with zero signs is an empty shell the learner can only walk into a dead
+/// end. Survivors are then renumbered 1..N so the UI never renders
+/// `UNIDAD 1 … UNIDAD 3 … UNIDAD 5`.
+///
+/// Unit numbers are load-bearing beyond the label: node ids are
+/// `u${number}-l${i+1}` / `u${number}-boss` and `claimChestForUnit(number)`
+/// keys on them. Renumbering therefore happens on the constructed
+/// [CurriculumUnit], and everything downstream keeps working off
+/// `unit.number` unchanged. It DOES invalidate the node ids of the previous
+/// (5-unit) path — accepted on purpose: the app has not shipped, and
+/// half-migrated progress pointing at nodes that no longer exist is worse
+/// than a clean start.
 ///
 /// Determinism contract: everything derives from the CSV order of [entries]
 /// — subtema grouping keeps first-appearance order, oversized subtemas split
@@ -185,6 +206,16 @@ Curriculum buildCurriculum(List<VocabEntry> entries) {
       for (final VocabEntry entry in entries)
         if (config.accepts(entry)) entry,
     ];
+    // A unit with nothing playable left is not a unit. Emitting it would
+    // paint a header card whose every node is instantly unstartable.
+    if (unitSigns.isEmpty) {
+      continue;
+    }
+    // Sequential over the SURVIVORS, not over `_unitConfigs`. Because the
+    // empty unit just `continue`d, `units.length` counts only units that will
+    // actually be emitted, so this is the renumbering the contract above
+    // requires — and it is the number baked into every node id below.
+    final int unitNumber = units.length + 1;
 
     // Group by subtema, preserving first-appearance order.
     final Map<String, List<VocabEntry>> bySubtema =
@@ -231,7 +262,7 @@ Curriculum buildCurriculum(List<VocabEntry> entries) {
           <String>{for (final (String, List<VocabEntry>) g in groups) g.$1};
       final String primary = groups.first.$1;
       nodes.add(PathNode(
-        id: 'u${config.number}-l${i + 1}',
+        id: 'u$unitNumber-l${i + 1}',
         title: subtemas.length == 1 ? primary : '$primary y más',
         kind: NodeKind.lesson,
         signs: <VocabEntry>[
@@ -264,7 +295,7 @@ Curriculum buildCurriculum(List<VocabEntry> entries) {
     // BOSS review: evenly spaced sample of the unit's signs.
     if (unitSigns.isNotEmpty) {
       titled.add(PathNode(
-        id: 'u${config.number}-boss',
+        id: 'u$unitNumber-boss',
         title: 'Repaso de unidad',
         kind: NodeKind.boss,
         signs: sampleEvenly(unitSigns, kBossExerciseCap),
@@ -272,7 +303,7 @@ Curriculum buildCurriculum(List<VocabEntry> entries) {
     }
 
     units.add(CurriculumUnit(
-      number: config.number,
+      number: unitNumber,
       title: config.title,
       nodes: titled,
     ));
@@ -313,8 +344,20 @@ String displayWordFor(VocabEntry entry) {
 }
 
 /// Path availability, derived from the compiled vocabulary index.
+///
+/// GATE A of the video-only rule: the path is built from [VocabIndex
+/// .videoEntries], not from the complete 201-sign index. Filtering here
+/// rather than inside [buildCurriculum] keeps the two concerns separate —
+/// the index answers "what may be taught at all", `buildCurriculum` answers
+/// "how is what may be taught chunked into units" — and it means a unit whose
+/// whole lesson is clip-less (U2 Números/colores/familia, U4 Comida/animales
+/// today) disappears from the path instead of stranding the learner.
 final FutureProvider<Curriculum> curriculumProvider =
     FutureProvider<Curriculum>((Ref ref) async {
-  final VocabIndex index = await ref.watch(vocabIndexProvider.future);
-  return buildCurriculum(index.entries);
-});
+      final VocabIndex index = await ref.watch(vocabIndexProvider.future);
+      return buildCurriculum(index.videoEntries);
+    });
+
+
+
+

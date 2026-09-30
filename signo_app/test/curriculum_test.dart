@@ -2,7 +2,35 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:signo_app/core/lsc_vocab/lsc_vocab.dart';
 import 'package:signo_app/features/learn/curriculum.dart';
 
+/// Fixture mirroring the real MonikLSC shape: U1/U2/U5 split L1 by subtema,
+/// U3 = L3, U4 = L4; L2 and L5 rows exist but feed NO unit. Row order is
+/// CSV order — the determinism source.
+///
+/// Every sign is clip-backed, because that is what `curriculumProvider` feeds
+/// `buildCurriculum` (`VocabIndex.videoEntries`). The chunking contract is what
+/// these tests are about; the video-only contract is pinned separately, in
+/// [buildCurriculum drops a unit whose signs are all clip-less].
 VocabEntry entry(
+  String id,
+  String gloss,
+  int lesson,
+  String subtema,
+) =>
+    VocabEntry(
+      id: id,
+      gloss: gloss,
+      lemmas: <String>[normalizeForMatch(gloss)],
+      lesson: lesson,
+      subtema: subtema,
+      hasVideo: true,
+      asset: 'assets/signs/$id.mp4',
+    );
+
+/// Deliberately clip-less twin of [entry]. Used ONLY where the point of the
+/// test is a sign the app cannot play — never as filler, because filler that
+/// is clip-less would be silently dropped by the video-only gate and change
+/// the expectations these chunking tests were written against.
+VocabEntry clipLessEntry(
   String id,
   String gloss,
   int lesson,
@@ -17,9 +45,6 @@ VocabEntry entry(
       hasVideo: false,
     );
 
-/// Fixture mirroring the real MonikLSC shape: U1/U2/U5 split L1 by subtema,
-/// U3 = L3, U4 = L4; L2 and L5 rows exist but feed NO unit. Row order is
-/// CSV order — the determinism source.
 final List<VocabEntry> fixture = <VocabEntry>[
   // L1 — U1 subtemas (10 signs: 2+2+3+3) plus one U5 alphabet sign.
   entry('s1', 'HOLA', 1, 'Saludos informales'),
@@ -137,10 +162,16 @@ void main() {
         for (int i = 0; i < 27; i++)
           entry('L${i.toString().padLeft(2, '0')}', 'LETRA$i', 1, 'Abecedario'),
       ];
-      final CurriculumUnit u5 = buildCurriculum(letters).units[4];
+      // U1–U4 hold no alphabet sign at all, so the video-only view leaves the
+      // dactilología unit as the ONLY unit — and renumbered to 1.
+      final CurriculumUnit u5 = buildCurriculum(
+        VocabIndex.build(letters).videoEntries,
+      ).units.single;
       final List<PathNode> lessons =
           u5.nodes.where((PathNode n) => !n.isBoss).toList();
 
+      expect(u5.number, 1, reason: 'renumbered: it is the first unit now');
+      expect(u5.title, 'Abecedario (dactilología)');
       expect(u5.allSigns.length, 27);
       // ceil(27 / 8) = 4 lessons, none over the cap, and a BOSS after them.
       expect(lessons.length, 4);
@@ -237,6 +268,111 @@ void main() {
           a.allNodes[i].signs.map((VocabEntry e) => e.id).toList(),
           b.allNodes[i].signs.map((VocabEntry e) => e.id).toList(),
         );
+      }
+    });
+  });
+
+  group('video-only contract', () {
+    test('buildCurriculum drops a unit whose signs are all clip-less', () {
+      // Real shape of the shipped content: U2 (números/colores/familia) and
+      // U4 (comida/animales) have zero bundled clips today, so they must not
+      // appear on the path at all — no header card, no nodes, no BOSS.
+      final List<VocabEntry> withClipLessUnits = <VocabEntry>[
+        entry('s1', 'HOLA', 1, 'Saludos informales'),
+        entry('s2', 'CHAU', 1, 'Despedida'),
+        // U2 — every row clip-less.
+        clipLessEntry('n0', 'NUM0', 1, 'Números'),
+        clipLessEntry('c0', 'COLOR0', 1, 'Colores'),
+        // U3 — playable.
+        entry('a0', 'ACC0', 3, 'Acciones'),
+        entry('a1', 'ACC1', 3, 'Acciones'),
+        // U4 — every row clip-less.
+        clipLessEntry('co0', 'COM0', 4, 'Comida'),
+        clipLessEntry('an0', 'ANI0', 4, 'Animales'),
+        // U5 — playable.
+        entry('l0', 'LETRA0', 1, 'Abecedario'),
+      ];
+
+      // The real path: video-only view of the complete index, then build.
+      final VocabIndex index = VocabIndex.build(withClipLessUnits);
+      final Curriculum curriculum = buildCurriculum(index.videoEntries);
+
+      expect(
+        curriculum.units
+            .map((CurriculumUnit u) => u.title)
+            .toList(),
+        <String>[
+          'Saludos y expresiones',
+          'Tiempo, lugares y acciones',
+          'Abecedario (dactilología)',
+        ],
+        reason: 'U2 and U4 are gone entirely',
+      );
+    });
+
+    test('surviving units are renumbered 1..N with no gaps', () {
+      // Otherwise the learner would read "UNIDAD 1 … UNIDAD 3 … UNIDAD 5"
+      // with no UNIDAD 2 anywhere, and a chest claim keyed on unit 3 or 5
+      // would never line up with what is on screen.
+      final VocabIndex index = VocabIndex.build(<VocabEntry>[
+        entry('s1', 'HOLA', 1, 'Saludos informales'),
+        clipLessEntry('n0', 'NUM0', 1, 'Números'),
+        clipLessEntry('n1', 'NUM1', 1, 'Números'),
+        entry('a0', 'ACC0', 3, 'Acciones'),
+        clipLessEntry('co0', 'COM0', 4, 'Comida'),
+        entry('l0', 'LETRA0', 1, 'Abecedario'),
+      ]);
+      final Curriculum curriculum = buildCurriculum(index.videoEntries);
+
+      expect(
+        curriculum.units.map((CurriculumUnit u) => u.number).toList(),
+        <int>[1, 2, 3],
+      );
+      // Node ids follow the renumbered unit, so progress keys stay consistent
+      // with the header the learner is looking at.
+      for (final CurriculumUnit unit in curriculum.units) {
+        for (final PathNode node in unit.nodes) {
+          expect(node.id, startsWith('u${unit.number}-'));
+        }
+      }
+      expect(
+        curriculum.allNodes.map((PathNode n) => n.id).toList(),
+        <String>['u1-l1', 'u1-boss', 'u2-l1', 'u2-boss', 'u3-l1', 'u3-boss'],
+      );
+    });
+
+    test('a sign that keeps only the flag but no clip path is still dropped',
+        () {
+      // `hasVideo` alone is not enough: without a path there is nothing for
+      // the player to load, so the entry is not playable and not taught.
+      const VocabEntry ghost = VocabEntry(
+        id: 'g0',
+        gloss: 'GHOST',
+        lemmas: <String>['ghost'],
+        lesson: 1,
+        subtema: 'Números',
+        hasVideo: true, // flag set…
+      ); // …but `asset` stays null.
+      expect(ghost.isVideoBacked, isFalse);
+      expect(
+        buildCurriculum(VocabIndex.build(<VocabEntry>[ghost]).videoEntries)
+            .units,
+        isEmpty,
+      );
+    });
+
+    test('no node on the built path ever holds a clip-less sign', () {
+      // The invariant in its most direct form: whatever the input, every sign
+      // reachable from the path can actually be played.
+      final VocabIndex index = VocabIndex.build(<VocabEntry>[
+        ...fixture.take(5).map((VocabEntry e) => e),
+        clipLessEntry('ghost1', 'GHOST1', 1, 'Números'),
+        clipLessEntry('ghost2', 'GHOST2', 4, 'Comida'),
+      ]);
+      for (final PathNode node in buildCurriculum(index.videoEntries).allNodes) {
+        for (final VocabEntry sign in node.signs) {
+          expect(sign.isVideoBacked, isTrue, reason: '${sign.gloss} is dead');
+        }
       }
     });
   });

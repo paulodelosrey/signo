@@ -72,6 +72,15 @@ class VocabEntry {
   final int? trimEndMs;
   final bool hasVideo;
 
+  /// THE product rule, in one predicate: a sign is only usable when the
+  /// manifest attached BOTH the `hasVideo` flag and the clip path.
+  ///
+  /// `hasVideo` alone is not enough — it is a manifest-level boolean, while
+  /// `asset` is what [SignVideoPlayer] actually loads. An entry claiming a
+  /// clip with a null `asset` would render a card that can never play, which
+  /// is exactly the dead surface the video-only rule exists to remove.
+  bool get isVideoBacked => hasVideo && asset != null;
+
   @override
   bool operator ==(Object other) => other is VocabEntry && other.id == id;
 
@@ -150,20 +159,49 @@ class GrammarRuleSet {
 
 /// In-memory vocabulary index: normalized lemma → entry (first CSV
 /// occurrence wins on duplicates like CAFE in L1 and L4).
+///
+/// A [VocabIndex] comes in two flavours, both built by [VocabIndex.build]:
+///
+/// * COMPLETE (the default) — all compiled signs, clip-less ones included.
+///   The dictionary needs this: a user must be able to look up a sign the app
+///   cannot yet play.
+/// * VIDEO-ONLY — [entries] and the lemma map are reduced to
+///   [VocabEntry.isVideoBacked] signs. Everything that TEACHES or TRANSLATES
+///   (learning path, exercises, Repasar, Práctica, translator) uses this
+///   flavour, so a clip-less sign can never be reached there. The dictionary
+///   keeps the complete one.
 class VocabIndex {
   VocabIndex._(this.entries, this._lemmaIndex);
 
-  factory VocabIndex.build(List<VocabEntry> entries) {
+  factory VocabIndex.build(
+    List<VocabEntry> entries, {
+    bool videoOnly = false,
+  }) {
+    // The predicate lives on the entry, never on a caller-side re-check: one
+    // definition, so the four gates cannot drift apart.
+    final List<VocabEntry> source = videoOnly
+        ? <VocabEntry>[
+            for (final VocabEntry entry in entries)
+              if (entry.isVideoBacked) entry,
+          ]
+        : entries;
+    // The lemma map MUST be derived from the same filtered list, not merely
+    // dropped from the full one: `lookup` on a video-only index has to return
+    // null for a clip-less word, and deriving it from the survivors is the
+    // only way that is guaranteed by construction rather than by inspection.
     final Map<String, VocabEntry> lemmaIndex = <String, VocabEntry>{};
-    for (final VocabEntry entry in entries) {
+    for (final VocabEntry entry in source) {
       for (final String lemma in entry.lemmas) {
         lemmaIndex.putIfAbsent(normalizeForMatch(lemma), () => entry);
       }
       lemmaIndex.putIfAbsent(normalizeForMatch(entry.gloss), () => entry);
     }
-    return VocabIndex._(List<VocabEntry>.unmodifiable(entries), lemmaIndex);
+    return VocabIndex._(List<VocabEntry>.unmodifiable(source), lemmaIndex);
   }
 
+  /// Always the COMPLETE index: the dictionary and the gloss-mapper tests
+  /// need every compiled sign, clip-less ones included. The video-only
+  /// flavour is opt-in through [build]'s flag or [copyWithVideoOnly].
   factory VocabIndex.fromJsonString(String jsonString) {
     final Map<String, Object?> json =
         jsonDecode(jsonString)! as Map<String, Object?>;
@@ -177,7 +215,29 @@ class VocabIndex {
   final List<VocabEntry> entries;
   final Map<String, VocabEntry> _lemmaIndex;
 
+  /// Only the signs that ship a playable clip, in first-appearance (CSV)
+  /// order. This is THE list every teaching surface iterates.
+  late final List<VocabEntry> videoEntries = List<VocabEntry>.unmodifiable(
+    <VocabEntry>[
+      for (final VocabEntry entry in entries)
+        if (entry.isVideoBacked) entry,
+    ],
+  );
+
   int get count => entries.length;
+
+  /// A video-only VIEW of an already-parsed index.
+  ///
+  /// The translator needs the same 201-entry asset as the dictionary but must
+  /// not see the 142 clip-less signs, and re-reading the asset just to
+  /// re-derive the filtered index would double the parse on every app start.
+  /// Entry order is preserved, so the filtered set matches `build` exactly.
+  ///
+  /// The lemma map is rebuilt from the already-parsed survivors rather than
+  /// filtered from the complete one on purpose: if a clip-less sign and a
+  /// clip-backed one share a lemma (e.g. `cafe` in two lessons), filtering
+  /// would delete the key and silently hide a sign that CAN be played.
+  VocabIndex copyWithVideoOnly() => VocabIndex.build(videoEntries, videoOnly: true);
 
   /// Resolves a raw (possibly accented, any-case) token to its entry.
   VocabEntry? lookup(String token) =>

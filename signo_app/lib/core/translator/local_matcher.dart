@@ -37,6 +37,13 @@ String? buildLocalNotice(GlossMappingResult mapping) {
 /// (vocabulary lookup + grammar rules: copula/connectors/articles/
 /// prepositions drops, time-fronting, verb-final reorder). No network and
 /// no platform channels — pure Dart over the compiled assets.
+///
+/// VIDEO-ONLY: [index] is expected to be `VocabIndex.copyWithVideoOnly()` (see
+/// [translatorServiceProvider]). A clip-less word is therefore not "matched
+/// then filtered", it simply does not resolve: `mapTokensToGlosses` classifies
+/// it as unknown and [buildLocalNotice] tells the user the word was omitted.
+/// This is why there is no `hasVideo` check in this class — the gate is the
+/// index, and duplicating it here would only make the omission unexplainable.
 class LocalMatcher implements TranslatorStrategy {
   LocalMatcher({required this.index, required this.rules});
 
