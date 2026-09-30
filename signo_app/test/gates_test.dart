@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:purchases_flutter/purchases_flutter.dart' show PackageType;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:signo_app/core/revenuecat/billing.dart';
 import 'package:signo_app/core/revenuecat/billing_provider.dart';
@@ -13,16 +14,28 @@ import 'package:signo_app/widgets/kinetic_button.dart';
 
 /// Fake remote for the configured-gateway tests: pure Dart, never touches a
 /// platform channel, so it is safe inside testWidgets FakeAsync zones.
+///
+/// Records the [PackageType] of every purchase so a test can prove which plan
+/// was actually asked for — the defect this harness exists to catch is a button
+/// that CLAIMS monthly while buying annual.
 class FakeBillingGateway implements BillingGateway {
   FakeBillingGateway({
     this.entitled = false,
     this.purchaseGrants = true,
     this.throwOnPurchase = false,
+    this.packageUnavailable = false,
   });
 
   final bool entitled;
   final bool purchaseGrants;
   final bool throwOnPurchase;
+
+  /// Simulates an offering that does not carry the requested plan.
+  final bool packageUnavailable;
+
+  /// Every `packageType` passed to [purchasePro]; null means the primary CTA
+  /// (paywall / annual fallback).
+  final List<PackageType?> purchasedPackageTypes = <PackageType?>[];
 
   @override
   Future<void> configure() async {}
@@ -31,9 +44,13 @@ class FakeBillingGateway implements BillingGateway {
   Future<bool> hasProEntitlement() async => entitled;
 
   @override
-  Future<bool> purchasePro() async {
+  Future<bool> purchasePro({PackageType? packageType}) async {
+    purchasedPackageTypes.add(packageType);
     if (throwOnPurchase) {
       throw const BillingUnavailableError('fake gateway outage');
+    }
+    if (packageUnavailable && packageType != null) {
+      throw const PackageUnavailableError('fake offering lacks the plan');
     }
     return purchaseGrants;
   }
@@ -71,10 +88,13 @@ Future<ProviderContainer> buildContainer({
 
 /// Pumps the paywall inside a minimal MaterialApp scaffold (M5 harness
 /// pattern: mock prefs + reduced motion on for deterministic settling).
+/// Pass [gateway] to force the configured RevenueCat path instead of the
+/// keyless demo, which is the only way to observe which plan was requested.
 Future<void> pumpPaywall(
   WidgetTester tester, {
   Map<String, Object>? prefsOverrides,
   TextScaler textScaler = TextScaler.noScaling,
+  BillingGateway? gateway,
 }) async {
   SharedPreferences.setMockInitialValues(<String, Object>{
     'signo.reducedMotion': true,
@@ -83,7 +103,10 @@ Future<void> pumpPaywall(
   prefs = await SharedPreferences.getInstance();
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        if (gateway != null) billingGatewayProvider.overrideWithValue(gateway),
+      ],
       child: MaterialApp(
         home: MediaQuery(
           data: MediaQueryData(textScaler: textScaler),
@@ -93,6 +116,9 @@ Future<void> pumpPaywall(
     ),
   );
   await tester.pumpAndSettle();
+  // PremiumScreen settles the billing mode from a microtask in initState;
+  // pumpAndSettle flushes it, so a gateway override is already on the
+  // configured RevenueCat path by the time the caller taps a CTA.
 }
 
 void main() {
@@ -261,6 +287,70 @@ void main() {
     });
   });
 
+  group('plan targeting (monthly must never buy annual)', () {
+    test('the primary CTA leaves the plan unconstrained (paywall path)',
+        () async {
+      final FakeBillingGateway gateway = FakeBillingGateway();
+      final ProviderContainer container =
+          await buildContainer(gateway: gateway);
+      await container.read(billingProvider.notifier).initialize();
+
+      await container.read(billingProvider.notifier).purchasePro();
+
+      expect(gateway.purchasedPackageTypes, <PackageType?>[null]);
+    });
+
+    test('the monthly CTA asks the gateway for the monthly package', () async {
+      final FakeBillingGateway gateway = FakeBillingGateway();
+      final ProviderContainer container =
+          await buildContainer(gateway: gateway);
+      await container.read(billingProvider.notifier).initialize();
+
+      await container.read(billingProvider.notifier)
+          .purchasePro(packageType: PackageType.monthly);
+
+      expect(
+        gateway.purchasedPackageTypes,
+        <PackageType?>[PackageType.monthly],
+      );
+      expect(gateway.purchasedPackageTypes, isNot(contains(PackageType.annual)));
+      expect(container.read(progressProvider).hasPro, isTrue);
+    });
+
+    test('an unresolvable monthly package fails loudly, never buys annual',
+        () async {
+      final FakeBillingGateway gateway =
+          FakeBillingGateway(packageUnavailable: true);
+      final ProviderContainer container =
+          await buildContainer(gateway: gateway);
+      await container.read(billingProvider.notifier).initialize();
+
+      await container.read(billingProvider.notifier)
+          .purchasePro(packageType: PackageType.monthly);
+
+      // Only the monthly package was ever requested...
+      expect(
+        gateway.purchasedPackageTypes,
+        <PackageType?>[PackageType.monthly],
+      );
+      // ...nothing was granted...
+      expect(container.read(progressProvider).hasPro, isFalse);
+      expect(container.read(billingProvider).pendingAction, isFalse);
+      // ...and the user is told the PLAN is missing, not that a payment failed.
+      expect(container.read(billingProvider).error, kPackageUnavailableMessage);
+    });
+
+    test('PackageUnavailableError is a BillingUnavailableError', () {
+      // The degradation contract must keep holding for the narrower failure:
+      // the controller catches the subtype first, everything else keeps landing
+      // on the generic message.
+      expect(
+        const PackageUnavailableError('x'),
+        isA<BillingUnavailableError>(),
+      );
+    });
+  });
+
   group('PremiumScreen (paywall widget)', () {
     testWidgets(
         'keyless demo paywall renders sandbox notice, prices and attribution',
@@ -310,6 +400,72 @@ void main() {
       expect(find.text('Empezar 7 días gratis'), findsNothing);
       // The flip IS the economy seam, persisted write-through.
       expect(prefs.getString(kProgressPrefsKey), contains('"hasPro":true'));
+    });
+
+    testWidgets('the monthly button targets the monthly package, not annual',
+        (WidgetTester tester) async {
+      final FakeBillingGateway gateway = FakeBillingGateway();
+      await pumpPaywall(tester, gateway: gateway);
+
+      await tester.scrollUntilVisible(
+        find.text('Elegir USD 9.99/mes'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Elegir USD 9.99/mes'));
+      await tester.pumpAndSettle();
+
+      // The button that CLAIMS USD 9.99/mes must ask for the monthly package.
+      expect(
+        gateway.purchasedPackageTypes,
+        <PackageType?>[PackageType.monthly],
+      );
+      expect(
+        gateway.purchasedPackageTypes,
+        isNot(contains(PackageType.annual)),
+      );
+    });
+
+    testWidgets('the trial button stays unconstrained (paywall / annual)',
+        (WidgetTester tester) async {
+      final FakeBillingGateway gateway = FakeBillingGateway();
+      await pumpPaywall(tester, gateway: gateway);
+
+      await tester.tap(find.text('Empezar 7 días gratis'));
+      await tester.pumpAndSettle();
+
+      expect(gateway.purchasedPackageTypes, <PackageType?>[null]);
+    });
+
+    testWidgets('an unavailable monthly plan surfaces an honest error',
+        (WidgetTester tester) async {
+      final FakeBillingGateway gateway =
+          FakeBillingGateway(packageUnavailable: true);
+      await pumpPaywall(tester, gateway: gateway);
+
+      await tester.scrollUntilVisible(
+        find.text('Elegir USD 9.99/mes'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Elegir USD 9.99/mes'));
+      await tester.pumpAndSettle();
+
+      // No silent annual substitution and no silent PRO grant.
+      expect(
+        gateway.purchasedPackageTypes,
+        <PackageType?>[PackageType.monthly],
+      );
+      expect(prefs.getString(kProgressPrefsKey) ?? '', isNot(contains('"hasPro":true')));
+      expect(find.text('PRO activo'), findsNothing);
+      // The CTAs stay alive so the user can pick the other plan.
+      expect(find.text('Elegir USD 9.99/mes'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text(kPackageUnavailableMessage),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text(kPackageUnavailableMessage), findsOneWidget);
     });
 
     testWidgets('an existing PRO user sees the active card, not the CTAs',

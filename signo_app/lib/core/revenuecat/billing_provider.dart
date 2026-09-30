@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:purchases_flutter/purchases_flutter.dart' show PackageType;
 
 import '../../features/learn/economy.dart' show progressProvider;
 import 'billing.dart';
@@ -16,6 +17,12 @@ const String kDemoPurchaseNotice =
 /// Generic user-facing failure for the configured (real RevenueCat) path.
 const String kPurchaseFailedMessage =
     'No se pudo completar la compra. Intenta de nuevo.';
+
+/// Failure when a specific plan was requested and the offering does not carry
+/// it. Distinct from [kPurchaseFailedMessage] on purpose: the user did nothing
+/// wrong, so the copy must not read as "your payment failed".
+const String kPackageUnavailableMessage =
+    'Ese plan no está disponible en este momento. Intenta con el plan anual.';
 
 /// Restore outcome inside the keyless demo: nothing to restore.
 const String kRestoreDemoMessage =
@@ -130,14 +137,20 @@ class BillingController extends Notifier<BillingState> {
   /// Runs the purchase. Keyless demo simulates it locally (judges experience
   /// PRO without a real purchase); the configured path goes through the
   /// gateway and degrades to a surfaced error — never a crash.
-  Future<void> purchasePro() async {
+  ///
+  /// [packageType] targets ONE plan instead of the paywall: the monthly CTA
+  /// passes [PackageType.monthly] so it can never settle an annual charge.
+  /// The gateway refuses to substitute another plan, so a missing plan
+  /// surfaces [kPackageUnavailableMessage] rather than quietly buying
+  /// something else. Null keeps the primary CTA on the paywall.
+  Future<void> purchasePro({PackageType? packageType}) async {
     state = state.copyWith(pendingAction: true, clearError: true);
     if (state.isKeylessDemo) {
       await _grantPro(mode: BillingMode.keylessDemo);
       return;
     }
     try {
-      final bool granted = await _gateway.purchasePro();
+      final bool granted = await _gateway.purchasePro(packageType: packageType);
       if (granted) {
         await _grantPro(mode: BillingMode.revenueCat);
       } else {
@@ -146,6 +159,11 @@ class BillingController extends Notifier<BillingState> {
           error: kPurchaseFailedMessage,
         );
       }
+    } on PackageUnavailableError {
+      state = state.copyWith(
+        pendingAction: false,
+        error: kPackageUnavailableMessage,
+      );
     } on BillingUnavailableError {
       state = state.copyWith(
         pendingAction: false,

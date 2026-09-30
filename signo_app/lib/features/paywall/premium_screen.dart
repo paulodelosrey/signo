@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:purchases_flutter/purchases_flutter.dart' show PackageType;
 
 import '../../app/theme.dart';
 import '../../core/revenuecat/billing.dart';
@@ -61,6 +62,10 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
                 : 'Empezar 7 días gratis',
             variant: KineticButtonVariant.primary,
             expand: true,
+            // No packageType: the paywall (server-configured pricing) is the
+            // right surface for "the recommended plan", and it lets the buyer
+            // choose. The gateway's annual fallback only applies when no
+            // paywall is configured at all.
             onPressed: billing.pendingAction
                 ? null
                 : () => ref.read(billingProvider.notifier).purchasePro(),
@@ -70,9 +75,18 @@ class _PremiumScreenState extends ConsumerState<PremiumScreen> {
             label: 'Elegir USD 9.99/mes',
             variant: KineticButtonVariant.secondary,
             expand: true,
+            // Targets the MONTHLY package explicitly. This used to call the
+            // very same no-argument `purchasePro()` as the button above it,
+            // and that path prefers the annual plan — so a judge who tapped
+            // "USD 9.99/mes" was one tap away from buying USD 49.99/año while
+            // the button said otherwise. If the monthly package cannot be
+            // resolved the controller surfaces kPackageUnavailableMessage;
+            // it never buys the annual plan instead.
             onPressed: billing.pendingAction
                 ? null
-                : () => ref.read(billingProvider.notifier).purchasePro(),
+                : () => ref
+                    .read(billingProvider.notifier)
+                    .purchasePro(packageType: PackageType.monthly),
           ),
           const SizedBox(height: 8),
           TextButton(
