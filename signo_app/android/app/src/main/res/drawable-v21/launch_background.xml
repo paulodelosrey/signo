@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
+<!-- Branded launch splash. Background matches KineticColors.background in
+     lib/theme.dart so the handoff from the splash to the first Flutter frame has
+     no colour jump in either light or dark mode. The bitmap is a generated
+     1080x2436 frame (tool/make_splash.ps1), not a stretched logo asset. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="?android:colorBackground" />
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#10131A" />
+        </shape>
+    </item>
 
-    <!-- You can insert your own image assets here -->
-    <!-- <item>
+    <item>
         <bitmap
-            android:gravity="center"
-            android:src="@mipmap/launch_image" />
-    </item> -->
+            android:gravity="fill"
+            android:src="@drawable/signo_splash" />
+    </item>
 </layer-list>

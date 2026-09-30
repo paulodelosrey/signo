@@ -1,0 +1,5 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches KineticColors.surfaceContainerLow in lib/theme.dart -->
+    <color name="ic_launcher_background">#191C23</color>
+</resources>
