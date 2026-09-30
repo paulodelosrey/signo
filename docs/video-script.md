@@ -12,6 +12,17 @@ narration doubles as the required English translation.
 voice track is merged over the screen capture afterwards, so a line you did not
 like costs you twenty seconds to redo, not the whole take.
 
+> **The delivered cut uses a synthetic voice, not a recorded one.**
+> `tool/narrate_ai.py` renders the narration with Edge TTS, `tool/merge_narration.py`
+> lays the seven scenes onto a fixed slot timeline, and `tool/assemble_video.py`
+> cuts the footage to match. Those three scripts own the scene boundaries, so the
+> timings below are estimates for a human read; the authoritative boundaries are
+> the `SLOT` table in `merge_narration.py` and the `SCENES` table in
+> `assemble_video.py`, which assert against each other.
+>
+> If you record your own voice instead, keep the per-scene files and feed them
+> through the same slot table so the screen cuts still line up.
+
 - Record in the quietest room you have, phone or mic **15–20 cm from your mouth**
 - Leave **2 seconds of silence** at the start and end of every file — the merge
   needs room to trim
@@ -173,12 +184,16 @@ playing. Try play/pause, the next-sign arrow, the 0.75× chip.*
 
 ### 6 — Premium · 25 words · **~12 s**
 
-> Premium unlocks infinite hearts — forty-nine ninety-nine a year, or
-> nine ninety-nine a month, powered by RevenueCat. Each button buys the plan it
-> names.
+> Premium unlocks infinite hearts. Start with seven days free, then forty-nine
+> ninety-nine a year, or nine ninety-nine a month — powered by RevenueCat.
 
 *Screen: the paywall, both plan tiles, scroll to the "Powered by RevenueCat"
 footer.*
+
+**Lead with the trial.** The paywall's most prominent element is the "7 días
+gratis" badge and the "Empezar 7 días gratis" button, so a line that only quotes
+the two prices leaves the strongest selling point on screen unsaid. Naming the
+trial first also matches the order the eye reads the screen.
 
 ---
 
