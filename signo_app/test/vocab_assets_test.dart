@@ -21,8 +21,8 @@ void main() {
       final String raw = await rootBundle.loadString(kVocabAssetPath);
       final VocabIndex index = VocabIndex.fromJsonString(raw);
 
-      expect(index.count, 201, reason: '190 usable CSV rows → 175 lexical '
-          'signs after removing 14 note rows and 1 empty-sign row, minus the '
+      expect(index.count, 201, reason: '190 usable CSV rows → 201 lexical '
+          'signs after removing note rows and one empty-sign row, minus the '
           'aggregate ABECEDARIO row plus its 27 expanded letter signs');
       expect(
         index.entries.every((VocabEntry e) => e.lemmas.isNotEmpty),

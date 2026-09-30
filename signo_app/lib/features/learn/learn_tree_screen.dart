@@ -20,7 +20,7 @@ const String kOutOfHeartsMessage =
     'Te quedaste sin corazones. Se rellenan al terminar una lección; con '
     'Premium tienes corazones ilimitados.';
 
-/// Aprender tab: the 4-unit serpentine learning path.
+/// Aprender tab: the 5-unit serpentine learning path.
 ///
 /// Layout per the mockup: HUD pills (🔥 streak · 💎 gems · ❤️ hearts), the
 /// static Repasar card when there are failed signs, then per unit a header
