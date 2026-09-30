@@ -44,7 +44,7 @@ void main() {
       // (notably the "Images ..." curriculum rows, which name pictures rather
       // than signs, and the bare month names under the single
       // "Meses del ano (Enero-Diciembre)" row); those stay unused on purpose.
-      expect(withVideo.length, 152);
+      expect(withVideo.length, 158);
       expect(
         withVideo.every((VocabEntry e) =>
             e.asset != null && e.asset!.startsWith('assets/signs/')),
@@ -108,9 +108,9 @@ void main() {
 
   group('the shipped learning path over the REAL assets', () {
     // The product decision, measured against the data the app actually ships:
-    // only the 152 clip-backed signs may teach, and of those only the ones
+    // only the 158 clip-backed signs may teach, and of those only the ones
     // inside a unit config reach the path. All five units now carry clips, so
-    // none of them is filtered away: 110 signs across 5 units, renumbered 1..5.
+    // none of them is filtered away: 112 signs across 5 units, renumbered 1..5.
     //
     // The gate itself is unchanged by that growth. It was built when only three
     // units had footage and the other two dropped off the path; the same
@@ -124,16 +124,53 @@ void main() {
       );
     });
 
-    test('only the 152 clip-backed signs are playable', () {
+    test('only the 158 clip-backed signs are playable', () {
       expect(index.count, 201);
-      expect(index.videoEntries.length, 152);
+      expect(index.videoEntries.length, 158);
       expect(
         index.videoEntries.every((VocabEntry e) => e.isVideoBacked),
         isTrue,
       );
     });
 
-    test('the path is 110 signs across all 5 clip-backed units', () {
+    test('a sign listed under several lessons is never half-video', () {
+      // The course names the same sign in more than one lesson: GRACIAS is in
+      // Leccion 2 and again in Leccion 5, CAFE in Leccion 1 and Leccion 4.
+      // When the compiler claimed a clip for the first duplicate only, the app
+      // shipped gracias.mp4 while the second entry told the user the video was
+      // not available - for the very same word, one search away.
+      //
+      // Duplicates are legitimate in the curriculum, so this asserts they stay
+      // CONSISTENT rather than pretending they do not exist.
+      final Map<String, List<VocabEntry>> byGloss = <String, List<VocabEntry>>{};
+      for (final VocabEntry e in index.entries) {
+        byGloss.putIfAbsent(e.gloss, () => <VocabEntry>[]).add(e);
+      }
+      final Iterable<MapEntry<String, List<VocabEntry>>> duplicated =
+          byGloss.entries.where(
+              (MapEntry<String, List<VocabEntry>> e) => e.value.length > 1);
+
+      // Guard the guard: if the curriculum ever stops repeating a sign, this
+      // test would pass vacuously, so prove the duplicates are really there.
+      expect(duplicated, isNotEmpty,
+          reason: 'no duplicated gloss found, the consistency check is blind');
+
+      for (final MapEntry<String, List<VocabEntry>> group in duplicated) {
+        final Set<bool> states =
+            group.value.map((VocabEntry e) => e.hasVideo).toSet();
+        expect(
+          states.length,
+          1,
+          reason: '${group.key} is listed ${group.value.length} times and '
+              'disagrees about whether it has video',
+        );
+        for (final VocabEntry e in group.value) {
+          expect(e.asset, isNotNull, reason: '${e.id} has no clip path');
+        }
+      }
+    });
+
+    test('the path is 112 signs across all 5 clip-backed units', () {
       final Curriculum curriculum = buildCurriculum(index.videoEntries);
 
       expect(
@@ -152,7 +189,7 @@ void main() {
         curriculum.units
             .expand((CurriculumUnit u) => u.allSigns)
             .length,
-        110,
+        112,
       );
       // Numbering must be sequential with no gaps left by a filtered unit.
       expect(
@@ -187,7 +224,7 @@ void main() {
       final Curriculum viaProvider =
           await container.read(curriculumProvider.future);
 
-      // `allSigns` (lessons only, no BOSS duplicates) is what "110 signs" means.
+      // `allSigns` (lessons only, no BOSS duplicates) is what "112 signs" means.
       expect(
         viaProvider.units
             .map((CurriculumUnit u) => '${u.number}: ${u.title}')
@@ -204,7 +241,7 @@ void main() {
         viaProvider.units
             .expand((CurriculumUnit u) => u.allSigns)
             .length,
-        110,
+        112,
       );
     });
   });
@@ -221,10 +258,10 @@ void main() {
       );
     });
 
-    test('browse-all states 201 signs and 152 with video', () {
+    test('browse-all states 201 signs and 158 with video', () {
       expect(
         dictionaryCoverageLine(index, index.entries, ''),
-        '201 señas · 152 con video',
+        '201 señas · 158 con video',
       );
     });
 
@@ -236,25 +273,25 @@ void main() {
       expect(
         dictionaryCoverageLine(index, results, 'casa'),
         '${results.length} ${results.length == 1 ? 'resultado' : 'resultados'} '
-        'de 201 señas · 152 con video',
+        'de 201 señas · 158 con video',
       );
       // The coverage half is unchanged by the query — the point of the line.
       expect(
         dictionaryCoverageLine(index, results, 'casa'),
-        contains('152 con video'),
+        contains('158 con video'),
       );
     });
 
     test('an empty search result still reports the coverage', () {
       expect(
         dictionaryCoverageLine(index, const <VocabEntry>[], 'zzz'),
-        '0 resultados de 201 señas · 152 con video',
+        '0 resultados de 201 señas · 158 con video',
       );
     });
 
     test('the count never exceeds the number of clip-backed signs', () {
       expect(index.videoEntries.length, lessThan(index.count));
-      expect(index.videoEntries.length, 152);
+      expect(index.videoEntries.length, 158);
     });
   });
 

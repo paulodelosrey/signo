@@ -345,13 +345,23 @@ AssetAssignment assignSignAssets(
   List<CompiledSign> signs,
   List<SignClip> clips,
 ) {
-  final Map<String, int> byLemma = <String, int>{};
-  final Map<String, int> byGloss = <String, int>{};
+  // The course lists the same sign under several lessons - "Gracias" appears in
+  // both Leccion 2 (Tipos de senas) and Leccion 5 (Frases comunes). Indexing one
+  // index per slug, as `putIfAbsent` does, means only the first duplicate can
+  // ever receive a clip: the app then ships gracias.mp4 while the second entry
+  // renders "Video no disponible por ahora" for the very same word. Both are
+  // true at once and a judge finds it in seconds by searching the word.
+  //
+  // So every slug maps to ALL of its entries, and a clip binds to every one of
+  // them. A sign still holds at most one clip: `claimed` keeps the first clip
+  // that reaches it and refuses to overwrite it.
+  final Map<String, List<int>> byLemma = <String, List<int>>{};
+  final Map<String, List<int>> byGloss = <String, List<int>>{};
   for (int i = 0; i < signs.length; i++) {
     for (final String lemma in signs[i].lemmas) {
-      byLemma.putIfAbsent(slugify(lemma), () => i);
+      byLemma.putIfAbsent(slugify(lemma), () => <int>[]).add(i);
     }
-    byGloss.putIfAbsent(slugify(signs[i].gloss), () => i);
+    byGloss.putIfAbsent(slugify(signs[i].gloss), () => <int>[]).add(i);
   }
 
   final Set<int> claimed = <int>{};
@@ -369,17 +379,27 @@ AssetAssignment assignSignAssets(
     }
   }
 
-  int? resolve(String slug, {required bool glossFirst}) {
-    final int? lemmaHit = byLemma[slug];
-    final int? glossHit = byGloss[slug];
-    for (final int? candidate in glossFirst
-        ? <int?>[glossHit, lemmaHit]
-        : <int?>[lemmaHit, glossHit]) {
-      if (candidate != null && !claimed.contains(candidate)) {
-        return candidate;
+  // Every unclaimed sign this slug names, gloss hits before lemma hits so the
+  // tie-break documented above still decides which GROUP is preferred, and a
+  // sign reachable both ways is not returned twice.
+  List<int> resolve(String slug, {required bool glossFirst}) {
+    final List<int> out = <int>[];
+    for (final List<int>? hits in glossFirst
+        ? <List<int>?>[byGloss[slug], byLemma[slug]]
+        : <List<int>?>[byLemma[slug], byGloss[slug]]) {
+      if (hits == null) {
+        continue;
+      }
+      for (final int candidate in hits) {
+        if (!claimed.contains(candidate) && !out.contains(candidate)) {
+          out.add(candidate);
+        }
+      }
+      if (out.isNotEmpty) {
+        break;
       }
     }
-    return null;
+    return out;
   }
 
   // Longest slugs first so a multi-word question form (`como_siente_pregunta`)
@@ -408,16 +428,20 @@ AssetAssignment assignSignAssets(
     }
     // Question forms are gloss-driven (rule 2), plain clips lemma-driven.
     for (final String candidate in candidates) {
-      final int? index = resolve(candidate, glossFirst: clip.isPregunta);
-      if (index != null) {
+      final List<int> indices = resolve(candidate, glossFirst: clip.isPregunta);
+      if (indices.isEmpty) {
+        continue;
+      }
+      // Bind the clip to EVERY duplicate this slug names, not just the first.
+      for (final int index in indices) {
         signs[index]
           ..asset = clip.assetPath
           ..hasVideo = true;
         claimed.add(index);
-        assignedAssets.add(clip.assetPath);
         matched.add(signs[index].id);
-        break;
       }
+      assignedAssets.add(clip.assetPath);
+      break;
     }
     if (!assignedAssets.contains(clip.assetPath)) {
       unmatched.add('${clip.slug} (${clip.folder})');
