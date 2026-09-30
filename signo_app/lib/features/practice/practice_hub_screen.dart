@@ -8,11 +8,14 @@ import '../learn/economy.dart';
 import '../learn/lesson_screen.dart';
 import '../learn/lesson_session.dart';
 
-/// Práctica tab: hub of the four exercise types.
+/// Práctica tab: hub of the two exercise types the app actually ships.
 ///
-/// Product decision: only the two MVP exercise types are active here
-/// (recognize / match, over signs from completed lessons). Simón and Bingo
-/// are OUT of the MVP — the cards exist, marked "Próximamente".
+/// Product decision: only the two MVP exercise types are here (recognize /
+/// match, over signs from completed lessons). Simón and Bingo were also listed,
+/// disabled and badged "Próximamente"; they were removed rather than shipped
+/// as dead cards. A tab offering two working exercises demos better than one
+/// offering two working exercises and two promises — and an unimplemented
+/// "Próximamente" card is a claim the code cannot back.
 class PracticeHubScreen extends ConsumerWidget {
   const PracticeHubScreen({super.key});
 
@@ -25,6 +28,13 @@ class PracticeHubScreen extends ConsumerWidget {
     final Curriculum? data = curriculum.value;
 
     // Signs from completed LESSON nodes (BOSS excluded), curriculum order.
+    //
+    // No video filter here on purpose: every sign in [pool] came out of
+    // `curriculumProvider`, which is GATE A and is fed
+    // `VocabIndex.videoEntries`. Re-filtering would be a second, drifting copy
+    // of a gate that is already provably upstream; the invariant is locked by
+    // buildExercises (GATE B) anyway, which filters `signs` and
+    // `distractorPool` before an exercise is ever constructed.
     final List<VocabEntry> pool = <VocabEntry>[];
     if (data != null) {
       for (final PathNode node in data.allNodes) {
@@ -69,20 +79,6 @@ class PracticeHubScreen extends ConsumerWidget {
           onTap: () =>
               _start(context, ref, pool, fixedType: ExerciseType.match),
         ),
-        _ExerciseTypeCard(
-          icon: Icons.memory_outlined,
-          title: 'Simón',
-          subtitle: 'Repite la secuencia de señas.',
-          enabled: false,
-          soon: true,
-        ),
-        _ExerciseTypeCard(
-          icon: Icons.grid_view_outlined,
-          title: 'Bingo',
-          subtitle: 'Marca las señas de tu tablero.',
-          enabled: false,
-          soon: true,
-        ),
       ],
     );
   }
@@ -106,15 +102,18 @@ class PracticeHubScreen extends ConsumerWidget {
   }
 }
 
-/// One hub card; disabled cards keep the 48px+ target and a "Próximamente"
-/// badge instead of disappearing.
+/// One hub card.
+///
+/// [enabled] is false when there is nothing to practise yet (no completed
+/// lesson). The card stays rendered at full touch-target size, dimmed, so the
+/// tab keeps its shape instead of reflowing when the user has no pool yet —
+/// there is no badge on it: the card is real, it is just locked.
 class _ExerciseTypeCard extends StatelessWidget {
   const _ExerciseTypeCard({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.enabled,
-    this.soon = false,
     this.onTap,
   });
 
@@ -122,7 +121,6 @@ class _ExerciseTypeCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool enabled;
-  final bool soon;
   final VoidCallback? onTap;
 
   @override
@@ -159,33 +157,7 @@ class _ExerciseTypeCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Text(title,
-                                style: textTheme.titleMedium),
-                            if (soon) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color:
-                                      KineticColors.surfaceContainerHigh,
-                                  borderRadius: BorderRadius.circular(
-                                      KineticRadii.pill),
-                                ),
-                                child: Text(
-                                  'Próximamente',
-                                  style: textTheme.labelSmall?.copyWith(
-                                    color: KineticColors.textLow,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
+                        Text(title, style: textTheme.titleMedium),
                         const SizedBox(height: 4),
                         Text(
                           subtitle,

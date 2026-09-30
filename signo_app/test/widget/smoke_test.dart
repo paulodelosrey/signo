@@ -12,28 +12,33 @@ import 'package:signo_app/core/settings/settings.dart';
 import 'package:signo_app/features/dictionary/dictionary_screen.dart';
 import 'package:signo_app/widgets/kinetic_button.dart';
 
+import '../support/settle_with_video_card.dart';
+
 /// Minimal in-memory content: smoke tests exercise the shell and theming,
 /// NOT the asset pipeline (real assets are covered by vocab_assets_test).
 /// Loading real assets through rootBundle inside repeated `testWidgets`
 /// FakeAsync zones is flaky (the second test's asset future may never
 /// complete), so content is injected instead.
+///
+/// Both signs are clip-backed, and that is now load-bearing rather than
+/// cosmetic: the translator resolves against `index.copyWithVideoOnly()`, so
+/// a clip-less fixture would turn the `hola` quick phrase into an
+/// out-of-vocabulary omission and the shell walk would lose its player card.
 final List<VocabEntry> kSmokeVocab = <VocabEntry>[
-  VocabEntry(
-    id: 'smoke-1',
-    gloss: 'HOLA',
-    lemmas: <String>['hola'],
-    lesson: 1,
-    subtema: 'Saludos informales',
-    hasVideo: false,
-  ),
-  VocabEntry(
-    id: 'smoke-2',
-    gloss: 'CHAU',
-    lemmas: <String>['chau'],
-    lesson: 1,
-    subtema: 'Despedida',
-    hasVideo: false,
-  ),
+  for (final (String id, String gloss, String subtema)
+      in <(String, String, String)>[
+    ('smoke-1', 'HOLA', 'Saludos informales'),
+    ('smoke-2', 'CHAU', 'Despedida'),
+  ])
+    VocabEntry(
+      id: id,
+      gloss: gloss,
+      lemmas: <String>[gloss.toLowerCase()],
+      lesson: 1,
+      subtema: subtema,
+      hasVideo: true,
+      asset: 'assets/signs/$id.mp4',
+    ),
 ];
 
 const GrammarRuleSet kSmokeGrammar = GrammarRuleSet(
@@ -51,8 +56,10 @@ Finder _kineticFaceFinder(Color faceColor) => find.byWidgetPredicate(
     );
 
 /// The T13 nav contract: Bingo is a hidden tab, so its label must never be a
-/// navigation destination. Scoped to the rail because the Práctica hub
-/// legitimately shows a disabled 'Bingo' exercise card (content, not nav).
+/// navigation destination — and, since the dead "Próximamente" cards were
+/// removed from the Práctica hub, the label is now absent from the whole
+/// shell too. The rail-scoped check is kept because it is the invariant that
+/// actually matters: no Bingo DESTINATION is reachable.
 void _expectNoBingoInNavRail() {
   expect(
     find.descendant(
@@ -61,6 +68,13 @@ void _expectNoBingoInNavRail() {
     ),
     findsNothing,
   );
+}
+
+/// No unimplemented "Próximamente" card survives anywhere in the shell. A
+/// tab offering two promises the code cannot honour reads as unfinished scope.
+void _expectNoComingSoonCards() {
+  expect(find.text('Próximamente'), findsNothing);
+  expect(find.text('Simón'), findsNothing);
 }
 
 Future<void> pumpApp(
@@ -118,8 +132,8 @@ void main() {
       expect(navBar, findsOneWidget);
 
       // 4 visible destinations, in order: Aprender, Práctica, Traductor,
-      // Premium. Bingo exists only as a hidden tab per spec — its label must
-      // be absent everywhere in the tree.
+      // Premium. Bingo is a hidden tab per spec and its dead Práctica card is
+      // gone, so the label must be absent everywhere in the tree.
       expect(
         find.descendant(of: navBar, matching: find.text('Aprender')),
         findsOneWidget,
@@ -137,6 +151,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Bingo'), findsNothing);
+      _expectNoComingSoonCards();
 
       // Kinetic theme applied to the navigation bar and color scheme.
       final BuildContext navContext = tester.element(navBar);
@@ -162,7 +177,7 @@ void main() {
     // quick phrases + translate button) instead of the M1 placeholder.
     expect(find.text('Traducir'), findsOneWidget);
     expect(find.text('gracias'), findsOneWidget);
-    expect(find.text('quiero aprender'), findsOneWidget);
+    expect(find.text('por favor'), findsOneWidget);
     expect(find.byType(SignoShell), findsOneWidget);
   });
 
@@ -172,12 +187,13 @@ void main() {
     await pumpApp(tester, onboardingSeen: true);
 
     // The action lives on the Aprender tab only; the injected smoke vocab
-    // has 2 signs, so the browse-all count reads '2 señas'.
+    // has 2 signs, both clip-backed, so the coverage line reads
+    // '2 señas · 2 con video'.
     await tester.tap(find.byIcon(Icons.menu_book_outlined));
     await tester.pumpAndSettle();
 
     expect(find.byType(DictionaryScreen), findsOneWidget);
-    expect(find.text('2 señas'), findsOneWidget);
+    expect(find.text('2 señas · 2 con video'), findsOneWidget);
     expect(find.text('HOLA'), findsOneWidget);
   });
 
@@ -253,6 +269,7 @@ void main() {
       // On the Aprender tab 'Bingo' is absent from the whole shell; the
       // nav-rail absence is re-checked on every visited tab below.
       expect(find.text('Bingo'), findsNothing);
+      _expectNoComingSoonCards();
 
       // -- Kinetic tokens behind every tab: mint/iris/amber scheme on the
       // dark background ladder.
@@ -304,12 +321,16 @@ void main() {
           tester.widget<Icon>(find.byIcon(Icons.visibility_outlined));
       expect(recognizeIcon.color, KineticColors.mint);
       _expectNoBingoInNavRail();
+      // Only the two implemented exercise types are offered.
+      expect(find.text('Asociar'), findsOneWidget);
+      _expectNoComingSoonCards();
 
       // -- Traductor: KineticButton CTA plus the real offline quick-phrase
-      // path ('hola' matches the fixture lemma; the rest of the phrase falls
-      // outside the 2-sign smoke vocabulary and is reported, not hidden).
-      // load() pauses at the first sign, so no timers are pending for
-      // pumpAndSettle.
+      // path. 'hola' is a seeded phrase and matches the fixture lemma, so the
+      // whole phrase resolves and nothing is reported as out of vocabulary.
+      // load() pauses at the first sign, so no timers are pending — but the
+      // player card mounts a video-backed sign, whose loading indicator never
+      // settles, so bounded pumps instead of pumpAndSettle.
       await tester.tap(find.text('Traductor'));
       await tester.pumpAndSettle();
       expect(find.text('Traducir'), findsOneWidget);
@@ -320,8 +341,8 @@ void main() {
         ),
         findsOneWidget,
       );
-      await tester.tap(find.widgetWithText(ActionChip, 'hola, buenos días'));
-      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ActionChip, 'hola'));
+      await settleWithVideoCard(tester);
       // The translated sequence renders through the REAL LocalMatcher path
       // (load() pauses at the first sign, so no timers are pending for
       // pumpAndSettle). The player card is within the short ListView's build
@@ -342,8 +363,11 @@ void main() {
       // -- Premium: paywall surfaces with the amber trial badge and the
       // always-visible attribution (below the fold in the free-user layout,
       // so scroll the paywall list until it builds into view).
+      // Bounded pumps from here on: the shell is an IndexedStack, so the
+      // Traductor tab and its video-backed player card stay mounted (and
+      // animating) after switching tabs — pumpAndSettle cannot return.
       await tester.tap(find.text('Premium'));
-      await tester.pumpAndSettle();
+      await settleWithVideoCard(tester);
       expect(find.text('Signo Premium'), findsOneWidget);
       expect(find.text('USD 49.99/año'), findsOneWidget);
       expect(find.text('7 días gratis'), findsOneWidget);
