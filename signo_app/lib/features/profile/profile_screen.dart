@@ -41,6 +41,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final AppSettings settings = ref.watch(settingsProvider);
     final EconomyState progress = ref.watch(progressProvider);
     final TextTheme textTheme = Theme.of(context).textTheme;
+    // GATE C: same honest count the session will actually use, so the card
+    // never offers a review that resolves to nothing.
+    final int reviewableFailedCount =
+        ref.watch(reviewableFailedCountProvider).value ?? 0;
 
     return Scaffold(
       appBar: kineticAppBar('Perfil'),
@@ -50,10 +54,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Text('Tu progreso', style: textTheme.headlineSmall),
           const SizedBox(height: 12),
           _StatsGrid(progress: progress),
-          if (progress.failedSignIds.isNotEmpty) ...[
+          if (reviewableFailedCount > 0) ...[
             const SizedBox(height: 12),
             _RepasarEntry(
-              failedCount: progress.failedSignIds.length,
+              failedCount: reviewableFailedCount,
               onStart: () => startRepasarSession(context, ref),
             ),
           ],

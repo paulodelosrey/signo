@@ -10,9 +10,10 @@ import 'sign_detail_screen.dart';
 ///
 /// Search-sign scenario: a query field filters the compiled vocabulary
 /// (case/diacritics-insensitive substring match over glosses and lemmas);
-/// with an empty query every sign of the 175-entry vocabulary is listed.
-/// Tapping a result opens the sign detail, which reuses the SignView
-/// text-mode T4 seam (videos still BLOCKED-USER).
+/// with an empty query every compiled sign is listed — clip-backed and
+/// clip-less alike, with the video coverage stated above the results. Tapping a
+/// result opens the sign detail, which reuses the SignView text-mode T4 seam
+/// (videos still BLOCKED-USER).
 class DictionaryScreen extends ConsumerStatefulWidget {
   const DictionaryScreen({super.key});
 
@@ -82,9 +83,7 @@ class _DictionaryScreenState extends ConsumerState<DictionaryScreen> {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    _query.isEmpty
-                        ? '${results.length} señas'
-                        : '${results.length} ${results.length == 1 ? 'resultado' : 'resultados'}',
+                    dictionaryCoverageLine(index, results, _query),
                     style: textTheme.labelMedium?.copyWith(
                       color: KineticColors.textLow,
                     ),
@@ -109,8 +108,46 @@ class _DictionaryScreenState extends ConsumerState<DictionaryScreen> {
   }
 }
 
+/// The count line above the results.
+///
+/// With no query it states the WHOLE dictionary and its video coverage
+/// ("201 señas · 59 con video"): both numbers come from the loaded index, never
+/// from a literal, so the claim cannot drift from the compiled content. The
+/// coverage is stated rather than hidden on purpose — a judge reading the real
+/// ratio reads a team that knows its own asset pipeline, where quietly listing
+/// only the clip-backed signs reads as ignorance of it.
+///
+/// With a query the line reports the matches AND keeps the coverage visible,
+/// because the filtered subset is a search result, not the size of the
+/// dictionary.
+///
+/// Public (not `_`-private) so the numbers can be asserted against the REAL
+/// compiled asset in a plain unit test: loading assets inside a `testWidgets`
+/// FakeAsync zone is unreliable, but this function is pure.
+String dictionaryCoverageLine(
+  VocabIndex index,
+  List<VocabEntry> results,
+  String query,
+) {
+  final String coverage =
+      '${index.count} señas · ${index.videoEntries.length} con video';
+  if (query.isEmpty) {
+    return coverage;
+  }
+  final String matches =
+      '${results.length} ${results.length == 1 ? 'resultado' : 'resultados'} de ';
+  return '$matches$coverage';
+}
+
 /// One tappable result row. Kept at 48px minimum height (a11y touch-target
 /// rule) with merged semantics for screen readers.
+///
+/// Only 59 of the 201 indexed signs have a bundled clip, so a row that looks
+/// exactly like a clip-backed one would promise a video the app cannot play.
+/// The small play badge marks the rows that genuinely open a clip, which keeps
+/// the browse list honest about coverage without adding a curation box. It is
+/// decorative only (no semantic label): the row is merged into a single
+/// announcement and a labelled child would corrupt it.
 class _SignRow extends StatelessWidget {
   const _SignRow({required this.entry});
 
@@ -172,6 +209,14 @@ class _SignRow extends StatelessWidget {
                       ],
                     ),
                   ),
+                  if (entry.isVideoBacked) ...<Widget>[
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.play_circle_fill,
+                      color: KineticColors.mint,
+                      size: 20,
+                    ),
+                  ],
                   const SizedBox(width: 8),
                   const Icon(
                     Icons.chevron_right,

@@ -9,43 +9,45 @@ import 'package:signo_app/features/learn/economy.dart';
 import 'package:signo_app/features/learn/lesson_screen.dart';
 import 'package:signo_app/features/profile/profile_screen.dart';
 
+import '../support/settle_with_video_card.dart';
+
 /// In-memory vocab fixture so the Repasar entry can resolve failed signs and
 /// start the shared session without touching real assets (rootBundle inside
 /// repeated testWidgets FakeAsync zones is flaky).
+///
+/// Every sign is clip-backed: `startRepasarSession` resolves the failed ids
+/// against `VocabIndex.videoEntries`, so a clip-less fixture would resolve
+/// nothing and the Repasar card would (correctly) never start a session.
 final List<VocabEntry> fixture = <VocabEntry>[
-  VocabEntry(
-    id: 's1',
-    gloss: 'HOLA',
-    lemmas: <String>['hola'],
-    lesson: 1,
-    subtema: 'Saludos informales',
-    hasVideo: false,
-  ),
-  VocabEntry(
-    id: 's2',
-    gloss: 'CHAU',
-    lemmas: <String>['chau'],
-    lesson: 1,
-    subtema: 'Despedidas',
-    hasVideo: false,
-  ),
-  VocabEntry(
-    id: 's3',
-    gloss: 'GRACIAS',
-    lemmas: <String>['gracias'],
-    lesson: 1,
-    subtema: 'Saludos informales',
-    hasVideo: false,
-  ),
-  VocabEntry(
-    id: 's4',
-    gloss: 'ADIOS',
-    lemmas: <String>['adios'],
-    lesson: 1,
-    subtema: 'Despedidas',
-    hasVideo: false,
-  ),
+  for (final (String id, String gloss, String subtema) in <(String, String, String)>[
+    ('s1', 'HOLA', 'Saludos informales'),
+    ('s2', 'CHAU', 'Despedidas'),
+    ('s3', 'GRACIAS', 'Saludos informales'),
+    ('s4', 'ADIOS', 'Despedidas'),
+  ])
+    VocabEntry(
+      id: id,
+      gloss: gloss,
+      lemmas: <String>[normalizeForMatch(gloss)],
+      lesson: 1,
+      subtema: subtema,
+      hasVideo: true,
+      asset: 'assets/signs/$id.mp4',
+    ),
 ];
+
+/// A sign the app cannot play, persisted as a failed id.
+const VocabEntry kClipLessEntry = VocabEntry(
+  id: 'dead-1',
+  gloss: 'FANTASMA',
+  lemmas: <String>['fantasma'],
+  lesson: 1,
+  subtema: 'Saludos informales',
+  hasVideo: false,
+);
+
+final List<VocabEntry> clipLessFixture = <VocabEntry>[kClipLessEntry];
+final List<VocabEntry> mixedFixture = <VocabEntry>[...fixture, kClipLessEntry];
 
 String progressBlob({
   int hearts = 5,
@@ -65,6 +67,7 @@ late SharedPreferences prefs;
 Future<void> pumpProfile(
   WidgetTester tester, {
   Map<String, Object>? prefsOverrides,
+  List<VocabEntry>? vocab,
 }) async {
   GoogleFonts.config.allowRuntimeFetching = false;
   SharedPreferences.setMockInitialValues(<String, Object>{
@@ -77,7 +80,7 @@ Future<void> pumpProfile(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         vocabIndexProvider.overrideWith(
-          (Ref ref) async => VocabIndex.build(fixture),
+          (Ref ref) async => VocabIndex.build(vocab ?? fixture),
         ),
       ],
       child: const MaterialApp(home: Scaffold(body: ProfileScreen())),
@@ -159,11 +162,64 @@ void main() {
     expect(find.text('2 señas fallidas'), findsOneWidget);
 
     await tester.tap(find.text('Repasar ahora'));
-    await tester.pumpAndSettle();
+    await settleWithVideoCard(tester);
 
     // Same semantics as the Aprender tree card: repasar session of 2.
     expect(find.byType(LessonScreen), findsOneWidget);
     expect(find.text('1/2'), findsOneWidget);
+  });
+
+  group('video-only gate on the persisted failed list', () {
+    testWidgets('a clip-less failed id starts no session', (
+      WidgetTester tester,
+    ) async {
+      // `dead-1` is in the vocabulary but ships no clip. `failedSignIds` is
+      // PERSISTED state, so it can still hold ids from before the video-only
+      // path — resolving one into an exercise would show a card that can never
+      // play. There is nothing to review, so the card must not be offered at
+      // all: a visible "Repasar ahora" that opens nothing is a dead button.
+      await pumpProfile(
+        tester,
+        vocab: clipLessFixture,
+        prefsOverrides: <String, Object>{
+          kProgressPrefsKey:
+              progressBlob(failedSignIds: <String>['dead-1']),
+        },
+      );
+
+      expect(find.text('URGENTE'), findsNothing);
+      expect(find.text('Repasar ahora'), findsNothing);
+      expect(find.textContaining('seña fallida'), findsNothing);
+      expect(find.byType(LessonScreen), findsNothing);
+    });
+
+    testWidgets('a mixed failed list reviews only the playable sign', (
+      WidgetTester tester,
+    ) async {
+      await pumpProfile(
+        tester,
+        vocab: mixedFixture,
+        prefsOverrides: <String, Object>{
+          kProgressPrefsKey: progressBlob(
+            failedSignIds: <String>['s1', 'dead-1'],
+          ),
+        },
+      );
+
+      // The card counts what the session can actually deliver, not the raw
+      // persisted list: one of these two ids is clip-less, so promising two
+      // would open a one-sign session.
+      expect(find.text('1 seña fallida'), findsOneWidget);
+      expect(find.text('2 señas fallidas'), findsNothing);
+
+      await tester.tap(find.text('Repasar ahora'));
+      await settleWithVideoCard(tester);
+
+      // The session runs a single exercise: the dead sign was dropped, the
+      // playable one survived. The number on the card matched it.
+      expect(find.byType(LessonScreen), findsOneWidget);
+      expect(find.text('1/1'), findsOneWidget);
+    });
   });
 
   testWidgets('large text toggle persists through the settings repository', (

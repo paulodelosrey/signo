@@ -1,11 +1,15 @@
 import 'dart:convert';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:signo_app/core/gloss_mapper/gloss_mapper.dart';
 import 'package:signo_app/core/lsc_vocab/lsc_vocab.dart';
 import 'package:signo_app/core/translator/local_matcher.dart';
 import 'package:signo_app/core/translator/translator_service.dart';
+import 'package:signo_app/features/dictionary/dictionary_screen.dart';
+import 'package:signo_app/features/dictionary/dictionary_search.dart';
+import 'package:signo_app/features/learn/curriculum.dart';
 
 /// Loads the REAL compiled assets (declared in pubspec) through rootBundle,
 /// proving the offline asset path works without the source CSV.
@@ -95,6 +99,150 @@ void main() {
       );
       expect(rules.categoryWords('copula'), contains('es'));
       expect(rules.provenanceNote, isNotEmpty);
+    });
+  });
+
+  group('the shipped learning path over the REAL assets', () {
+    // The product decision, measured against the data the app actually ships:
+    // only the 59 clip-backed signs may teach, and of those only the ones
+    // inside a unit config reach the path. U2 (números/colores/familia) and
+    // U4 (comida/animales) have no clips at all and vanish; what is left is
+    // 46 signs across 3 units, renumbered 1..3.
+    late VocabIndex index;
+
+    setUpAll(() async {
+      index = VocabIndex.fromJsonString(
+        await rootBundle.loadString(kVocabAssetPath),
+      );
+    });
+
+    test('only the 59 clip-backed signs are playable', () {
+      expect(index.count, 201);
+      expect(index.videoEntries.length, 59);
+      expect(
+        index.videoEntries.every((VocabEntry e) => e.isVideoBacked),
+        isTrue,
+      );
+    });
+
+    test('the path is 46 signs across 3 video-only units, renumbered 1..3',
+        () {
+      final Curriculum curriculum = buildCurriculum(index.videoEntries);
+
+      expect(
+        curriculum.units
+            .map((CurriculumUnit u) => '${u.number}: ${u.title}')
+            .toList(),
+        <String>[
+          '1: Saludos y expresiones',
+          '2: Tiempo, lugares y acciones',
+          '3: Abecedario (dactilología)',
+        ],
+      );
+      expect(
+        curriculum.units
+            .expand((CurriculumUnit u) => u.allSigns)
+            .length,
+        46,
+      );
+      // U2 and U4 are not merely empty — they are not on the path at all, so
+      // no header card and no BOSS for a unit the learner cannot complete.
+      expect(
+        curriculum.units
+            .map((CurriculumUnit u) => u.title)
+            .toList(),
+        isNot(contains('Números, colores y familia')),
+      );
+      expect(
+        curriculum.units
+            .map((CurriculumUnit u) => u.title)
+            .toList(),
+        isNot(contains('Comida y animales')),
+      );
+      for (final CurriculumUnit unit in curriculum.units) {
+        for (final PathNode node in unit.nodes) {
+          for (final VocabEntry sign in node.signs) {
+            expect(sign.isVideoBacked, isTrue, reason: '${sign.gloss} is dead');
+          }
+        }
+      }
+    });
+
+    test('curriculumProvider builds that same 3-unit path (GATE A)', () async {
+      // Goes through the real provider against the real asset, so a revert of
+      // the provider back to `index.entries` fails HERE and not only in a
+      // hypothetical. This is the gate, asserted at the gate.
+      final ProviderContainer container = ProviderContainer();
+      addTearDown(container.dispose);
+      final Curriculum viaProvider =
+          await container.read(curriculumProvider.future);
+
+      // `allSigns` (lessons only, no BOSS duplicates) is what "46 signs" means.
+      expect(
+        viaProvider.units
+            .map((CurriculumUnit u) => '${u.number}: ${u.title}')
+            .toList(),
+        <String>[
+          '1: Saludos y expresiones',
+          '2: Tiempo, lugares y acciones',
+          '3: Abecedario (dactilología)',
+        ],
+      );
+      expect(
+        viaProvider.units
+            .expand((CurriculumUnit u) => u.allSigns)
+            .length,
+        46,
+      );
+    });
+  });
+
+  group('dictionary coverage line (real assets)', () {
+    // The dictionary states its own coverage instead of hiding the clip-less
+    // 142 signs. This asserts the ACTUAL numbers the screen renders, so the
+    // copy can never claim more video than actually ships.
+    late VocabIndex index;
+
+    setUpAll(() async {
+      index = VocabIndex.fromJsonString(
+        await rootBundle.loadString(kVocabAssetPath),
+      );
+    });
+
+    test('browse-all states 201 signs and 59 with video', () {
+      expect(
+        dictionaryCoverageLine(index, index.entries, ''),
+        '201 señas · 59 con video',
+      );
+    });
+
+    test('a search keeps the matches and the total coverage visible', () {
+      final List<VocabEntry> results =
+          searchSigns(index.entries, 'casa');
+
+      expect(results, isNotEmpty);
+      expect(
+        dictionaryCoverageLine(index, results, 'casa'),
+        '${results.length} ${results.length == 1 ? 'resultado' : 'resultados'} '
+        'de 201 señas · 59 con video',
+      );
+      // The coverage half is unchanged by the query — the point of the line.
+      expect(
+        dictionaryCoverageLine(index, results, 'casa'),
+        contains('59 con video'),
+      );
+    });
+
+    test('an empty search result still reports the coverage', () {
+      expect(
+        dictionaryCoverageLine(index, const <VocabEntry>[], 'zzz'),
+        '0 resultados de 201 señas · 59 con video',
+      );
+    });
+
+    test('the count never exceeds the number of clip-backed signs', () {
+      expect(index.videoEntries.length, lessThan(index.count));
+      expect(index.videoEntries.length, 59);
     });
   });
 
