@@ -12,8 +12,12 @@ hands facing each other in the app's mint, on transparency.
 | `android/.../drawable-nodpi/signo_splash.png` | 1080×2436 launch splash |
 
 The master is kept at 1254×1254 rather than the 48 px the smallest launcher slot
-needs, so the assets stay sharp if a density is ever added. Regenerate from the
-master rather than editing the mipmaps directly.
+needs, so the assets stay sharp if a density is ever added. The five asset groups
+above are committed output, not build steps: nothing regenerates them, so treat
+this file as the source of truth and the mipmaps as derived from it.
+
+`assets/icon/` is not listed in `pubspec.yaml` and is not bundled into the app —
+the launcher reads the Android resources directly.
 
 **Replacing the mark:** overwrite this file and re-derive all five asset groups
 above. Nothing else in the app references the icon, so no Dart change is needed.
