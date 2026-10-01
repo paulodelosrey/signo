@@ -4,6 +4,14 @@ Signo is a Flutter app that teaches **Lengua de Señas Colombiana** through a ga
 
 **▶ [Watch the demo](https://www.youtube.com/watch?v=uPj-6VAjJNM)** — 77 seconds on a real device: the learning path, the dictionary, the offline translator and the RevenueCat-powered paywall.
 
+## Repository layout
+
+The Flutter application lives in [`signo_app/`](signo_app/) — source under
+`lib/`, 232 tests under `test/`, and the 198 sign clips under
+`assets/signs/`. `docs/` holds the LSC grammar corpus and the design record;
+`MonikLSC/` holds the interpreter's course file that `assets/content/vocab.json`
+is compiled from.
+
 ## Star features
 
 1. **Spanish → LSC translator, offline-first.** A local grammar engine maps any typed sentence to LSC gloss — dropping copulas and connectors, fronting time expressions, reordering verb-final — and plays the matching signs in a sequenced player (`Secuencia n/n`, 0.75×/1× speed, Spanish text-to-speech). It works with zero network. An optional Gemini strategy refines translations when an API key is supplied.
