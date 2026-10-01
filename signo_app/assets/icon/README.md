@@ -1,17 +1,19 @@
 # App icon — source art
 
-`signo_app_logo.png` is the Stitch-generated logo mockup, committed here as the
-icon's **source art reference** (origin: `docs/design-reference/signo_app_logo/screen.png`, 150x135 px).
+`signo_app_logo.png` is the master the launcher assets are generated from. Two
+hands facing each other in the app's mint, on transparency.
 
-## Status
+| Asset | Generated from this file |
+|---|---|
+| `android/.../mipmap-*/ic_launcher.png` | legacy square icon, 48→192 px |
+| `android/.../mipmap-*/ic_launcher_foreground.png` | adaptive foreground, 108→432 px |
+| `android/.../mipmap-anydpi-v26/ic_launcher.xml` | adaptive icon declaration |
+| `android/.../values/colors.xml` | `ic_launcher_background` = `#191C23` |
+| `android/.../drawable-nodpi/signo_splash.png` | 1080×2436 launch splash |
 
-The Shipaton Next Gen checklist requires a **1024x1024** app icon. This source
-art is far below that resolution, so it is committed for reference only — it is
-**not** wired into the app and **not** registered in `pubspec.yaml`.
+The master is kept at 1254×1254 rather than the 48 px the smallest launcher slot
+needs, so the assets stay sharp if a density is ever added. Regenerate from the
+master rather than editing the mipmaps directly.
 
-## Next steps (needs a design/device pass — BLOCKED-USER)
-
-1. Recreate or upscale the logo to 1024x1024 px.
-2. Add `flutter_launcher_icons` as a dev dependency plus a
-   `flutter_launcher_icons.yaml` config.
-3. Run `dart run flutter_launcher_icons` to generate all platform icons.
+**Replacing the mark:** overwrite this file and re-derive all five asset groups
+above. Nothing else in the app references the icon, so no Dart change is needed.
