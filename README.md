@@ -2,6 +2,8 @@
 
 Signo is a Flutter app that teaches **Lengua de Señas Colombiana** through a gamified learning path and translates written Spanish into LSC sign sequences — built for the **RevenueCat Shipaton 2026, Next Gen Award**. It pairs a visual dictionary of **201 signs, 158 of them with curated video today**, with an offline-first translator, so hearing relatives, teachers, and students can practice with the Colombian Deaf community — even with no internet and no interpreter around.
 
+**▶ [Watch the demo](https://www.youtube.com/watch?v=uPj-6VAjJNM)** — 77 seconds on a real device: the learning path, the dictionary, the offline translator and the RevenueCat-powered paywall.
+
 ## Star features
 
 1. **Spanish → LSC translator, offline-first.** A local grammar engine maps any typed sentence to LSC gloss — dropping copulas and connectors, fronting time expressions, reordering verb-final — and plays the matching signs in a sequenced player (`Secuencia n/n`, 0.75×/1× speed, Spanish text-to-speech). It works with zero network. An optional Gemini strategy refines translations when an API key is supplied.
@@ -62,6 +64,8 @@ Accessibility is a first-class toggle set, not an afterthought: **large text** (
 
 ## Submission package
 
+- **[▶ Demo video](https://www.youtube.com/watch?v=uPj-6VAjJNM)** — 77 s, real device, English narration over the Spanish UI. RevenueCat paywall and footer visible at 0:56
+- **[▶ Vertical cut](https://www.youtube.com/shorts/XBMDiMS9t-Q)** — the same demo as a Short
 - [`docs/`](docs/) — the LSC grammar corpus the translator's rules come from, and the design record of how the screens were built
 - [`screenshots/`](screenshots/) — the five required 1179x2556 device shots, with what each one proves
 - [`icon-1024.png`](icon-1024.png) — 1024x1024 app icon
