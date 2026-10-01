@@ -40,9 +40,9 @@ desktop.ini
 *.swp
 
 # --- Produccion del demo de video: artefactos locales, nunca versionados ---
-# Los scripts de tool/ SI se versionan porque regeneran todo de forma
-# reproducible. Los binarios pesados no: capturas de pantalla, voz y render.
-# build/signo-demo.mp4 se sube a YouTube/Vimeo, no al repo.
+# El repo lleva el producto, no su fabricacion. Las capturas de pantalla, la voz
+# y el render se regeneran y se publican aparte; el video del submission vive en
+# YouTube/Vimeo, no aqui.
 narration-ai/
 video-shots/
 build/

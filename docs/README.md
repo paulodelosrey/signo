@@ -5,29 +5,29 @@ product lives entirely in `signo_app/`.
 
 | Folder / file | What it is | Read it if you want to know |
 |---|---|---|
-| `video-script.md` | The demo video script (~90 s), under the 2-minute Shipaton limit | What the submission video says and shows |
 | `lsc-grammar/` | 12 files of DBLSC grammar: chapter notes, a glossary, syntactic patterns and a cheatsheet, compiled from the corpus | Where the translator's grammar rules actually come from |
-| `design-reference/` | Screen mockups generated with Stitch while designing the product, one folder per screen | How the UI was designed before it was built |
+| `design-reference/` | Screen mockups produced during design, one folder per screen | How the UI was designed before it was built |
 
 ## Why these are here at all
 
 `lsc-grammar/` and `design-reference/` are not referenced by any Dart code,
 `pubspec.yaml` entry or build step. They are kept because deleting them would
-delete someone's work and the reasoning behind the product:
+remove the answer to the first question a judge asks about a sign-language app:
+*where does this content actually come from?*
 
-- **The grammar corpus is a collaborator's contribution.** The LSC grammar rules
-  the translator uses were derived from these notes. Shipping the app without
-  them would make the linguistic basis unreproducible.
-- **The mockups are the design record.** They predate the Flutter implementation
-  and are why the shipped screens look the way they do. The icon's source art
-  also comes from here (`design-reference/signo_app_logo/screen.png`).
+- `MonikLSC/` holds the interpreter's course CSV, the source `vocab.json` is
+  compiled from.
+- `lsc-grammar/` holds the grammar corpus the translator's rules are derived
+  from.
+- `design-reference/` holds the screens as they were designed.
 
-Both used to sit at the repository root, where a reviewer landing on the project
-saw 40 files of another tool's HTML before reaching any product code. Moving
-them under `docs/` keeps the root readable without discarding anything.
+## `design-reference/` includes directions that were rejected
 
-## The one thing that must be tracked
+Not every mockup here shipped, and the folder keeps the rejected ones on
+purpose. It contains explorations that were cut — a Simon-style repetition game,
+an alphabet bingo card, a camera-based exercise — along with one early concept
+built around ASL rather than Colombian Sign Language.
 
-`signo_app/assets/content/vocab.json` is **generated** — never hand-edit it. Run
-`dart run tool/parse_vocab.dart` from `signo_app/` after changing the course CSV
-or the clip manifest. Its source of truth is `MonikLSC/` at the repository root.
+They are here as the record of what was tried and why it did not make the cut,
+not as a roadmap. `signo_app/` is the product; where the two disagree, the app
+is right. The commit history carries the reasoning for each removal.

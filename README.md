@@ -62,7 +62,7 @@ Accessibility is a first-class toggle set, not an afterthought: **large text** (
 
 ## Submission package
 
-- [`docs/`](docs/) — the demo video script, the LSC grammar corpus the translator's rules come from, and the pre-build screen mockups
+- [`docs/`](docs/) — the LSC grammar corpus the translator's rules come from, and the design record of how the screens were built
 - [`screenshots/`](screenshots/) — the five required 1179x2556 device shots, with what each one proves
 - [`icon-1024.png`](icon-1024.png) — 1024x1024 app icon
 - [`MonikLSC/`](MonikLSC/) — the interpreter's course CSV, the source of truth `vocab.json` is compiled from
